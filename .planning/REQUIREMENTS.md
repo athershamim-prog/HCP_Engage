@@ -37,9 +37,9 @@
 - [ ] **CONT-03**: Generated PDF contracts are stored as immutable rendered artifacts in cloud storage under a per-tenant path prefix
 - [ ] **CONT-04**: Contract status is tracked through named stages: draft → sent → executed → expired
 
-### Disclosure
+### Contracts (continued)
 
-- [ ] **DISC-01**: System produces an audit-ready Open Payments (Sunshine Act) export with all CMS-required fields for the selected reporting period; export includes pre-submission validation that replicates CMS rules locally and flags errors before file generation
+- [ ] **CONT-05**: System sends a generated contract to the HCP for electronic signature via DocuSign; contract status advances to "executed" automatically on DocuSign completion event; signed document stored as an immutable artifact linked to the engagement
 
 ### Audit & Governance
 
@@ -72,7 +72,7 @@
 
 | Feature | Reason |
 |---------|--------|
-| E-signature / DocuSign integration | Complexity; contract execution is compliance officer attestation in v1 |
+| Open Payments Export (DISC-01) | Moved to v2 per user decision — deferred until TOV recording and aggregate spend tracking are also in scope |
 | Payment processing (ACH/check initiation) | Avoids financial licensing complexity; payments processed in existing client ERP |
 | European regulatory frameworks (EFPIA, ABPI) | US Sunshine Act is the initial market; international scope added in a future milestone |
 | Mobile application | Web-first for v1; compliance officers and finance teams are desktop users |
@@ -83,37 +83,38 @@
 
 ## Traceability
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| AUD-01 | Phase 1 | Pending |
-| AUD-02 | Phase 1 | Pending |
-| HCP-01 | Phase 2 | Pending |
-| HCP-02 | Phase 2 | Pending |
-| HCP-03 | Phase 2 | Pending |
-| HCP-04 | Phase 2 | Pending |
-| FMV-01 | Phase 2 | Pending |
-| FMV-02 | Phase 2 | Pending |
-| FMV-03 | Phase 2 | Pending |
-| FMV-04 | Phase 2 | Pending |
-| FMV-05 | Phase 2 | Pending |
-| FMV-06 | Phase 2 | Pending |
-| ENG-01 | Phase 3 | Pending |
-| ENG-02 | Phase 3 | Pending |
-| ENG-03 | Phase 3 | Pending |
-| ENG-04 | Phase 3 | Pending |
-| ENG-05 | Phase 3 | Pending |
-| ENG-06 | Phase 3 | Pending |
-| CONT-01 | Phase 4 | Pending |
-| CONT-02 | Phase 4 | Pending |
-| CONT-03 | Phase 4 | Pending |
-| CONT-04 | Phase 4 | Pending |
-| DISC-01 | Phase 5 | Pending |
+| Requirement | Phase | Phase Name | Status |
+|-------------|-------|------------|--------|
+| AUD-01 | Phase 1 | Foundation | Pending |
+| AUD-02 | Phase 1 | Foundation | Pending |
+| HCP-01 | Phase 2 | HCP Management + FMV | Pending |
+| HCP-02 | Phase 2 | HCP Management + FMV | Pending |
+| HCP-03 | Phase 2 | HCP Management + FMV | Pending |
+| HCP-04 | Phase 2 | HCP Management + FMV | Pending |
+| FMV-01 | Phase 2 | HCP Management + FMV | Pending |
+| FMV-02 | Phase 2 | HCP Management + FMV | Pending |
+| FMV-03 | Phase 2 | HCP Management + FMV | Pending |
+| FMV-04 | Phase 2 | HCP Management + FMV | Pending |
+| FMV-05 | Phase 2 | HCP Management + FMV | Pending |
+| FMV-06 | Phase 2 | HCP Management + FMV | Pending |
+| ENG-01 | Phase 3 | Engagement Lifecycle + Approval | Pending |
+| ENG-02 | Phase 3 | Engagement Lifecycle + Approval | Pending |
+| ENG-03 | Phase 3 | Engagement Lifecycle + Approval | Pending |
+| ENG-04 | Phase 3 | Engagement Lifecycle + Approval | Pending |
+| ENG-05 | Phase 3 | Engagement Lifecycle + Approval | Pending |
+| ENG-06 | Phase 3 | Engagement Lifecycle + Approval | Pending |
+| CONT-01 | Phase 4 | Contract Generation | Pending |
+| CONT-02 | Phase 4 | Contract Generation | Pending |
+| CONT-03 | Phase 4 | Contract Generation | Pending |
+| CONT-04 | Phase 4 | Contract Generation | Pending |
+| CONT-05 | Phase 4 | Contract Generation | Pending |
 
 **Coverage:**
 - v1 requirements: 23 total
 - Mapped to phases: 23
 - Unmapped: 0 ✓
+- Phase 5 (Operations + Polish): no new v1 requirements — operationalizes and hardens Phases 1–4 capabilities
 
 ---
 *Requirements defined: 2026-05-07*
-*Last updated: 2026-05-07 after initial definition*
+*Last updated: 2026-05-07 after roadmap creation*
