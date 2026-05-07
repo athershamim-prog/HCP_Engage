@@ -1,120 +1,133 @@
 # Requirements: HCP Engage
 
 **Defined:** 2026-05-07
-**Core Value:** Every dollar paid to an HCP is captured, justified, and audit-ready — with zero compliance exposure from missing or invalid engagements.
+**Revised:** 2026-05-07 — Simplified for fast launch: single-tenant, 3 roles, no audit log, no DocuSign, FMV display only, single approval, manual debarment
+**Core Value:** Every dollar paid to an HCP is captured, justified, and traceable — simple enough to ship fast, solid enough to meet compliance basics.
 
 ## v1 Requirements
+
+### Auth & Access
+
+- [ ] **AUTH-01**: System enforces role-based access with three roles — Business, Compliance, and Finance — each with defined permissions; access to all routes and write actions is validated against the authenticated user's role before execution
 
 ### HCP Data
 
 - [ ] **HCP-01**: User can look up and verify an HCP by NPI via CMS NPPES API (validates NPI exists, pulls canonical name, specialty, and credentials)
 - [ ] **HCP-02**: User can view HCP profile with name, credentials, NUCC specialty code, primary state, and HCO affiliation
-- [ ] **HCP-03**: System checks HCP against OIG LEIE and SAM.gov exclusion lists; compliance officer can review match results and record determination with rationale
-- [ ] **HCP-04**: Compliance officer can set HCP status (active / inactive / suspended / do-not-engage) with a mandatory reason field; all status changes are logged in the audit trail
+- [ ] **HCP-03**: Compliance officer can manually trigger a debarment check against OIG LEIE and SAM.gov; view match results and record a determination with rationale
+- [ ] **HCP-04**: Compliance officer can set HCP status (active / inactive / suspended / do-not-engage) with a mandatory reason field; status history is visible on the HCP profile
 
 ### FMV
 
 - [ ] **FMV-01**: Admin can upload an FMV rate card (Excel/CSV) with a parsed preview before commit — upload is rejected if specialty values cannot be matched to NUCC taxonomy codes
 - [ ] **FMV-02**: Rate card upload validates all specialty values against a local NUCC taxonomy reference table before activation
-- [ ] **FMV-03**: Rate cards are immutably versioned — rows are never overwritten; each version carries effective date ranges and supersedes the prior version on activation
-- [ ] **FMV-04**: System looks up the applicable FMV rate by HCP NUCC specialty + geography + engagement type at engagement request creation time and snapshots the rate onto the engagement record
-- [ ] **FMV-05**: System flags engagements where proposed compensation exceeds the applicable FMV rate ceiling; above-rate engagements require a mandatory written justification from the requestor
-- [ ] **FMV-06**: User can view all rate card versions and see the rate that was snapshotted onto any specific engagement
+- [ ] **FMV-03**: Rate cards are versioned with effective date ranges; activating a new version supersedes the prior one
+- [ ] **FMV-04**: System displays the applicable FMV rate for an HCP at engagement creation time (by NUCC specialty + geography + engagement type) — shown for reference only, does not block submission
+- [ ] **FMV-05**: User can view all rate card versions
 
 ### Engagement
 
 - [ ] **ENG-01**: User can submit an engagement request for five engagement types: advisory board, speaker program, investigator/research, meal/TOV, and training
-- [ ] **ENG-02**: Engagement request form fields are configurable per engagement type by an admin without code deployment
-- [ ] **ENG-03**: Engagement lifecycle is enforced as a named state machine: Draft → Submitted → Under Review → Approved → Contracted → Completed, with Cancelled and Rejected as terminal states; only named transitions are permitted
-- [ ] **ENG-04**: Each engagement type supports a configurable multi-level approval chain (e.g., manager → compliance officer → legal) evaluated in sequence
-- [ ] **ENG-05**: Approver can delegate approval authority to another user with a mandatory expiration date; delegation is attributed separately in the audit log
-- [ ] **ENG-06**: Admin can configure engagement types, their form fields, and their approval chain via admin UI without code deploys; configuration changes are versioned and auditable
+- [ ] **ENG-02**: Engagement status tracks four stages: Draft → Submitted → Approved / Rejected → Completed
+- [ ] **ENG-03**: A single approver (Compliance or Finance role) reviews, then approves or rejects the engagement; rejection requires a reason
 
 ### Contracts
 
-- [ ] **CONT-01**: Compliance officer can upload, version, and manage contract templates, with each template assigned to one or more engagement types
-- [ ] **CONT-02**: System auto-generates a PDF contract from the applicable template, merged with HCP profile data, engagement scope, and FMV rate snapshot; optional field handling is explicit (no silent nulls)
-- [ ] **CONT-03**: Generated PDF contracts are stored as immutable rendered artifacts in cloud storage under a per-tenant path prefix
-- [ ] **CONT-04**: Contract status is tracked through named stages: draft → sent → executed → expired
+- [ ] **CONT-01**: Compliance officer can upload, version, and manage contract templates assigned to one or more engagement types
+- [ ] **CONT-02**: System auto-generates a PDF contract from the applicable template merged with HCP profile data, engagement scope, and the displayed FMV rate — optional fields are explicitly marked as not applicable when absent
+- [ ] **CONT-03**: Generated PDF contracts are stored in cloud storage and cannot be overwritten through the application
+- [ ] **CONT-04**: Contract status tracks four stages: Draft → Sent → Executed → Expired
 
-### Contracts (continued)
-
-- [ ] **CONT-05**: System sends a generated contract to the HCP for electronic signature via DocuSign; contract status advances to "executed" automatically on DocuSign completion event; signed document stored as an immutable artifact linked to the engagement
-
-### Audit & Governance
-
-- [ ] **AUD-01**: All system state changes are captured in an append-only audit log; each entry stores: entity type + ID, transition name, before/after state, actor name + email + role as strings (not FK only), server-side timestamp, and SHA-256 checksum — the audit schema uses a write-only database role that the application cannot UPDATE or DELETE
-- [ ] **AUD-02**: System enforces role-based access control with five roles: admin, compliance officer, manager, legal, finance — each with defined permissions; access to all routes and actions is validated against the authenticated user's role before execution
+---
 
 ## v2 Requirements
 
-### HCP Data
+### Audit & Governance
 
-- **HCP-V2-01**: User receives and signs a version-stamped consent form; consent record captures version, timestamp, and collection method (digital self-service vs. compliance officer entry)
+- **AUD-01**: Append-only audit log with write-only DB role, SHA-256 checksums, before/after state capture
+- **AUD-V2-01**: Audit event viewer — per-entity timeline, filterable, exportable for regulatory response
+
+### Multi-Tenancy
+
+- **PLAT-01**: tenant_id on every table; PostgreSQL row-level security enforced per tenant
+
+### Engagement — Advanced
+
+- **ENG-V2-01**: Configurable multi-level approval chain (e.g., manager → compliance → legal) evaluated in sequence
+- **ENG-V2-02**: Approver can delegate approval authority to another user with a mandatory expiration date
+- **ENG-V2-03**: Engagement form fields are configurable per engagement type by an admin without code deployment
+- **ENG-V2-04**: Full state machine: Draft → Submitted → Under Review → Approved → Contracted → Completed, with Cancelled and Rejected terminal states
+- **ENG-V2-05**: Admin can configure engagement types, form fields, and approval chains via admin UI without code deploys; changes are versioned
+
+### FMV — Enforcement
+
+- **FMV-V2-01**: System blocks submission when proposed compensation exceeds the FMV rate ceiling; above-rate requires mandatory written justification
+- **FMV-V2-02**: FMV rate is snapshotted (immutably) onto the engagement record at creation time
+
+### Contracts — DocuSign
+
+- **CONT-V2-01**: System sends generated contract to HCP via DocuSign; contract status advances to "executed" automatically on DocuSign completion webhook; signed artifact stored as immutable blob
+
+### Debarment — Automated
+
+- **HCP-V2-01**: System automatically re-checks debarment status monthly for all active HCPs; re-check results logged
 
 ### Spend & Disclosure
 
 - **DISC-V2-01**: Compliance officer can record Transfers of Value (TOV) linked to engagements with Sunshine Act nature-of-payment category mapping
-- **DISC-V2-02**: System aggregates spend per HCP per program year with retroactive reportability reclassification when the de minimis threshold is crossed
-- **DISC-V2-03**: Spend dashboard shows running totals by HCP, period, and category for compliance officers and finance
+- **DISC-V2-02**: Aggregate spend per HCP per program year with retroactive reportability reclassification at de minimis threshold
+- **DISC-V2-03**: Spend dashboard by HCP, period, and category
 
-### Audit & Governance
+### HCP Consent
 
-- **AUD-V2-01**: Compliance officer can view a per-entity event timeline (audit viewer) and export filtered audit data formatted for regulatory response
-- **AUD-V2-02**: Admin can configure approval chains via admin UI without code deploys; configuration changes are versioned and auditable
+- **HCP-V2-02**: HCP receives and signs a version-stamped consent form; consent record captures version, timestamp, and collection method
 
-### Platform
+---
 
-- **PLAT-V2-01**: Platform supports multi-tenant isolation with PostgreSQL row-level security enforced per tenant
-- **PLAT-V2-02**: HCO (Healthcare Organization) can be directly engaged and paid; HCO engagement tracked with same compliance controls as HCP engagement
-
-## Out of Scope
+## Out of Scope (v1)
 
 | Feature | Reason |
 |---------|--------|
-| Open Payments Export (DISC-01) | Moved to v2 per user decision — deferred until TOV recording and aggregate spend tracking are also in scope |
-| Payment processing (ACH/check initiation) | Avoids financial licensing complexity; payments processed in existing client ERP |
-| European regulatory frameworks (EFPIA, ABPI) | US Sunshine Act is the initial market; international scope added in a future milestone |
-| Mobile application | Web-first for v1; compliance officers and finance teams are desktop users |
-| CRM integration (Salesforce, Veeva) | Out of scope for v1; integration layer planned after core data model stabilizes |
-| State-level gift law reporting (CA, MA, VT, MN) | Data model must not foreclose this, but reporting module is deferred |
-| Drag-and-drop workflow builder | Admin UI with predefined approval chain config is sufficient for v1 clients |
-| AI/ML FMV benchmarking or anomaly detection | Deferred; requires training data that only exists after platform has history |
+| DocuSign e-signature | Deferred to v2 — manual contract execution sufficient for launch |
+| Audit log | Deferred to v2 — adds infrastructure complexity before core flows exist |
+| Multi-tenant RLS | Single-tenant v1; multi-tenant architecture deferred to v2 |
+| FMV enforcement/blocking | Display only in v1; blocking logic added in v2 after client validation |
+| Configurable approval chains | Single approver sufficient for v1 clients |
+| Automated debarment re-checks | Manual trigger sufficient for v1; scheduling added in v2 |
+| Open Payments Export | Requires TOV recording — deferred to v2 |
+| Payment processing | Handled in client ERP |
+| Mobile application | Web-first, desktop users |
+| CRM integration | Deferred after data model stabilizes |
+
+---
 
 ## Traceability
 
 | Requirement | Phase | Phase Name | Status |
 |-------------|-------|------------|--------|
-| AUD-01 | Phase 1 | Foundation | Pending |
-| AUD-02 | Phase 1 | Foundation | Pending |
-| HCP-01 | Phase 2 | HCP Management + FMV | Pending |
-| HCP-02 | Phase 2 | HCP Management + FMV | Pending |
-| HCP-03 | Phase 2 | HCP Management + FMV | Pending |
-| HCP-04 | Phase 2 | HCP Management + FMV | Pending |
-| FMV-01 | Phase 2 | HCP Management + FMV | Pending |
-| FMV-02 | Phase 2 | HCP Management + FMV | Pending |
-| FMV-03 | Phase 2 | HCP Management + FMV | Pending |
-| FMV-04 | Phase 2 | HCP Management + FMV | Pending |
-| FMV-05 | Phase 2 | HCP Management + FMV | Pending |
-| FMV-06 | Phase 2 | HCP Management + FMV | Pending |
-| ENG-01 | Phase 3 | Engagement Lifecycle + Approval | Pending |
-| ENG-02 | Phase 3 | Engagement Lifecycle + Approval | Pending |
-| ENG-03 | Phase 3 | Engagement Lifecycle + Approval | Pending |
-| ENG-04 | Phase 3 | Engagement Lifecycle + Approval | Pending |
-| ENG-05 | Phase 3 | Engagement Lifecycle + Approval | Pending |
-| ENG-06 | Phase 3 | Engagement Lifecycle + Approval | Pending |
-| CONT-01 | Phase 4 | Contract Generation | Pending |
-| CONT-02 | Phase 4 | Contract Generation | Pending |
-| CONT-03 | Phase 4 | Contract Generation | Pending |
-| CONT-04 | Phase 4 | Contract Generation | Pending |
-| CONT-05 | Phase 4 | Contract Generation | Pending |
+| AUTH-01 | Phase 1 | Auth + HCP Management | Pending |
+| HCP-01 | Phase 1 | Auth + HCP Management | Pending |
+| HCP-02 | Phase 1 | Auth + HCP Management | Pending |
+| HCP-03 | Phase 1 | Auth + HCP Management | Pending |
+| HCP-04 | Phase 1 | Auth + HCP Management | Pending |
+| FMV-01 | Phase 2 | FMV + Engagement | Pending |
+| FMV-02 | Phase 2 | FMV + Engagement | Pending |
+| FMV-03 | Phase 2 | FMV + Engagement | Pending |
+| FMV-04 | Phase 2 | FMV + Engagement | Pending |
+| FMV-05 | Phase 2 | FMV + Engagement | Pending |
+| ENG-01 | Phase 2 | FMV + Engagement | Pending |
+| ENG-02 | Phase 2 | FMV + Engagement | Pending |
+| ENG-03 | Phase 2 | FMV + Engagement | Pending |
+| CONT-01 | Phase 3 | Contracts + Polish | Pending |
+| CONT-02 | Phase 3 | Contracts + Polish | Pending |
+| CONT-03 | Phase 3 | Contracts + Polish | Pending |
+| CONT-04 | Phase 3 | Contracts + Polish | Pending |
 
 **Coverage:**
-- v1 requirements: 23 total
-- Mapped to phases: 23
+- v1 requirements: 17 total (down from 23)
+- Mapped to phases: 17
 - Unmapped: 0 ✓
-- Phase 5 (Operations + Polish): no new v1 requirements — operationalizes and hardens Phases 1–4 capabilities
 
 ---
 *Requirements defined: 2026-05-07*
-*Last updated: 2026-05-07 after roadmap creation*
+*Revised: 2026-05-07 — simplified scope for fast launch*

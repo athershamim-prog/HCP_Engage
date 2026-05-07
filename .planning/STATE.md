@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-05-07)
 
 ## Current Position
 
-Phase: 0 of 5 (Not started)
+Phase: 0 of 3 (Not started)
 Plan: 0 of TBD in current phase
 Status: Ready to plan
-Last activity: 2026-05-07 — Roadmap created; 23 v1 requirements mapped across 5 phases; Open Payments Export moved to v2; DocuSign added to Phase 4
+Last activity: 2026-05-07 — Requirements simplified for fast launch; 17 v1 requirements across 3 phases; audit log, tenant_id, DocuSign, FMV enforcement, state machine, multi-level approval all moved to v2
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -39,11 +39,9 @@ Progress: [░░░░░░░░░░] 0%
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | Foundation | Not Started |
-| 2 | HCP Management + FMV | Not Started |
-| 3 | Engagement Lifecycle + Approval | Not Started |
-| 4 | Contract Generation + DocuSign | Not Started |
-| 5 | Operations + Polish | Not Started |
+| 1 | Auth + HCP Management | Not Started |
+| 2 | FMV + Engagement | Not Started |
+| 3 | Contracts + Polish | Not Started |
 
 ## Accumulated Context
 
