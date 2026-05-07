@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// HCP Core
+// ─────────────────────────────────────────────
+
+model Hcp {
+  id                  String    @id @default(cuid())
+  npi                 String    @unique
+  firstName           String
+  lastName            String
+  fullName            String
+  credentials         String?
+  nuccCode            String    // NUCC taxonomy code
+  nuccDisplayName     String    // Human-readable specialty
+  primaryState        String    // 2-letter abbreviation
+  hcoAffiliation      String?   // Null if no affiliation on record
+  status              HcpStatus @default(active)
+  debarmentCheckedAt  DateTime?
+  debarmentStatus     DebarmentStatus @default(not_checked)
+  addedByClerkId      String    // Clerk user ID of the person who added this HCP
+  addedByName         String    // Stored as string at time of add (not FK)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  statusHistory       HcpStatusHistory[]
+  debarmentChecks     DebarmentCheck[]
+
+  @@index([npi])
+  @@index([status])
+  @@index([lastName, firstName])
+}
+
+model HcpStatusHistory {
+  id          String    @id @default(cuid())
+  hcpId       String
+  status      HcpStatus
+  reason      String    // Mandatory — min 10 chars enforced at application layer
+  setByClerkId String   // Clerk user ID
+  setByName   String    // Stored as string at time of change
+  createdAt   DateTime  @default(now())
+
+  hcp         Hcp       @relation(fields: [hcpId], references: [id], onDelete: Cascade)
+
+  @@index([hcpId])
+}
+
+// ─────────────────────────────────────────────
+// Debarment
+// ─────────────────────────────────────────────
+
+model DebarmentCheck {
+  id                String               @id @default(cuid())
+  hcpId             String
+  checkedByClerkId  String
+  checkedByName     String
+  oigHit            Boolean
+  samHit            Boolean
+  oigMatchJson      Json?                // Raw OIG match fields if hit
+  samMatchJson      Json?                // Raw SAM.gov match fields if hit
+  createdAt         DateTime             @default(now())
+
+  hcp               Hcp                  @relation(fields: [hcpId], references: [id], onDelete: Cascade)
+  determination     DebarmentDetermination?
+
+  @@index([hcpId])
+}
+
+model DebarmentDetermination {
+  id              String                @id @default(cuid())
+  checkId         String                @unique
+  outcome         DeterminationOutcome
+  rationale       String                // Mandatory — min 20 chars enforced at application layer
+  recordedByClerkId String
+  recordedByName  String
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  check           DebarmentCheck        @relation(fields: [checkId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────────────────────────────
+// OIG LEIE Reference (pre-seeded, read-only in v1)
+// Modeled on real OIG LEIE CSV structure
+// ─────────────────────────────────────────────
+
+model OigLeieRecord {
+  id              String    @id @default(cuid())
+  lastName        String
+  firstName       String?
+  middleName      String?
+  busName         String?   // Business name for entity exclusions
+  general         String?   // General nature of exclusion
+  specialty       String?
+  upin            String?
+  npi             String?
+  dob             String?   // Date of birth as string (OIG CSV format: MM/DD/YYYY)
+  address         String?
+  city            String?
+  state           String?
+  zip             String?
+  exclusionType   String    // e.g., "1128a1" (section of Social Security Act)
+  exclusionDate   String    // Date exclusion took effect (MM/DD/YYYY)
+  waiverDate      String?
+  waiverState     String?
+  createdAt       DateTime  @default(now())
+
+  @@index([npi])
+  @@index([lastName, firstName])
+}
+
+// ─────────────────────────────────────────────
+// SAM.gov Exclusion Reference (pre-seeded, read-only in v1)
+// Modeled on real SAM.gov exclusion record fields
+// ─────────────────────────────────────────────
+
+model SamGovRecord {
+  id                    String    @id @default(cuid())
+  classificationType    String    // "Individual" or "Firm"
+  exclusionType         String    // e.g., "Ineligible (Proceedings Pending)"
+  exclusionProgram      String    // e.g., "Reciprocal"
+  agencyName            String
+  ctCode                String?
+  npi                   String?
+  name                  String
+  prefix                String?
+  firstName             String?
+  middleName            String?
+  lastName              String?
+  suffix                String?
+  address1              String?
+  address2              String?
+  city                  String?
+  stateOrProvince       String?
+  zipCode               String?
+  country               String?
+  activationDate        String    // MM/DD/YYYY
+  terminationDate       String?
+  recordStatus          String    @default("Active")
+  crossReferenceList    String?
+  createdAt             DateTime  @default(now())
+
+  @@index([npi])
+  @@index([name])
+}
+
+// ─────────────────────────────────────────────
+// User Role Expansion (D-04b)
+// Per-user grants — only for individually elevated Compliance users
+// ─────────────────────────────────────────────
+
+model UserGrant {
+  id          String    @id @default(cuid())
+  clerkUserId String    @unique
+  grantedRoles String[] // Array of role strings: ["business", "finance"]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([clerkUserId])
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum HcpStatus {
+  active
+  inactive
+  suspended
+  do_not_engage
+}
+
+enum DebarmentStatus {
+  not_checked
+  clear
+  hit
+}
+
+enum DeterminationOutcome {
+  cleared
+  confirmed_exclusion
+  false_positive
+}
