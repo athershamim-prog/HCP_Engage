@@ -3,7 +3,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import type { NppesHcp } from "@/lib/nppes";
-import type { Hcp } from "@prisma/client";
+import type { Hcp, Prisma } from "@prisma/client";
 
 export type HcpSearchResult = Pick<
   Hcp,
@@ -74,7 +74,7 @@ export async function searchHcps(params: {
 
   const { query, statuses, page = 1, pageSize = 20 } = params;
 
-  const where: Parameters<typeof prisma.hcp.findMany>[0]["where"] = {};
+  const where: Prisma.HcpWhereInput = {};
 
   if (query && query.trim()) {
     const q = query.trim();
