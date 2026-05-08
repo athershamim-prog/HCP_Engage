@@ -12,7 +12,10 @@ Every dollar paid to an HCP is captured, justified, and audit-ready — with zer
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Role-based access (3 roles) with route enforcement via Clerk — AUTH-01 *(Validated in Phase 1: Auth + HCP Management)*
+- [x] HCP onboarding with NPI verification via NPPES — HCP-01, HCP-02 *(Validated in Phase 1)*
+- [x] Manual debarment checks (OIG LEIE + SAM.gov) with determination recording — HCP-03 *(Validated in Phase 1)*
+- [x] HCP status management (4 statuses) with mandatory reason and full history — HCP-04 *(Validated in Phase 1)*
 
 ### Active
 
@@ -75,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-07 after initialization*
+*Last updated: 2026-05-08 after Phase 1 completion*

@@ -12,7 +12,7 @@ Three phases carry HCP Engage from zero to a working compliance platform. Each p
 
 ## Phases
 
-- [ ] **Phase 1: Auth + HCP Management** - Role-based access (3 roles) and full HCP onboarding with NPI lookup and manual debarment check
+- [x] **Phase 1: Auth + HCP Management** - Role-based access (3 roles) and full HCP onboarding with NPI lookup and manual debarment check
 - [ ] **Phase 2: FMV + Engagement** - Rate card upload and display, engagement submission with simple status flow and single approval
 - [ ] **Phase 3: Contracts + Polish** - PDF contract generation from templates, cloud storage, contract status tracking
 
@@ -30,7 +30,26 @@ Three phases carry HCP Engage from zero to a working compliance platform. Each p
   2. A compliance officer can look up an HCP by NPI and see their canonical name, credentials, NUCC specialty, primary state, and HCO affiliation pulled from NPPES.
   3. A compliance officer can manually trigger a debarment check against OIG LEIE and SAM.gov, view the results, and record a determination with a written rationale.
   4. A compliance officer can set an HCP's status (active / inactive / suspended / do-not-engage) with a mandatory reason; the full status history is visible on the HCP profile.
-**Plans:** TBD
+**Plans:** 4 plans
+
+Plans:
+
+**Wave 1**
+- [x] 01-PLAN-skeleton.md — Walking skeleton: Next.js scaffold + Clerk auth + Prisma schema (all 7 tables) + role-gated app shell
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [x] 01-PLAN-hcp-directory.md — HCP Directory + NPI Lookup: NPPES API client, addHcp Server Action, filterable HCP table
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [x] 01-PLAN-hcp-profile.md — HCP Profile + Debarment Check: full profile page, debarment logic against local tables, determination recording
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [x] 01-PLAN-hcp-status.md — HCP Status Management: Set Status panel, setHcpStatus Server Action, status history wired into profile
+
+**Cross-cutting constraints:**
+- All plans: Prisma models from `prisma/schema.prisma` (Wave 1) must exist before any DB operations
+- All plans: `lib/auth.ts` role definitions and `getEffectiveRoles()` established in Wave 1
+- hcp-profile and hcp-status: Both operate within `app/(app)/hcps/[id]/page.tsx`; hcp-profile creates it, hcp-status extends it
 
 ### Phase 2: FMV + Engagement
 **Goal:** Admins can upload and version FMV rate cards, and users can submit engagement requests that route to a single approver for approval or rejection.
@@ -65,6 +84,6 @@ Three phases carry HCP Engage from zero to a working compliance platform. Each p
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Auth + HCP Management | 0/TBD | Not started | - |
+| 1. Auth + HCP Management | 4/4 | Complete | 2026-05-08 |
 | 2. FMV + Engagement | 0/TBD | Not started | - |
 | 3. Contracts + Polish | 0/TBD | Not started | - |
