@@ -1,3 +1,11 @@
+// Mock prisma to avoid DATABASE_URL requirement in unit tests for pure functions
+jest.mock("@/lib/prisma", () => ({
+  prisma: {
+    oigLeieRecord: { findMany: jest.fn() },
+    samGovRecord: { findMany: jest.fn() },
+  },
+}));
+
 import { normalizeName, matchOigRecord, matchSamRecord } from "./debarment";
 
 const oigRecordWithNpi = {
