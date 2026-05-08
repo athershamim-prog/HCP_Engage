@@ -62,7 +62,26 @@ Plans:
   3. At engagement creation, the system displays the applicable FMV rate for the HCP by specialty + geography + engagement type — shown for reference, submission is not blocked.
   4. A user can submit an engagement request for any of the five engagement types (advisory board, speaker program, investigator/research, meal/TOV, training).
   5. An engagement moves through four stages: Draft → Submitted → Approved/Rejected → Completed; a Compliance or Finance user can approve or reject a submitted engagement, with rejection requiring a reason.
-**Plans:** TBD
+**Plans:** 5 plans
+
+Plans:
+
+**Wave 1**
+- [ ] 02-01-PLAN.md — Foundation: schema extensions (NuccTaxonomy, FmvRateCard, FmvRate, Engagement, EngagementStatusHistory) + npx prisma db push + SheetJS install + shadcn Skeleton/AlertDialog + route permissions + sidebar nav + Wave 0 test stubs
+
+**Wave 2** *(blocked on Wave 1 completion — Plans 02 and 03 run in parallel)*
+- [ ] 02-02-PLAN.md — FMV upload vertical slice: lib/fmv-parser.ts + parseRateCardAction + activateRateCardAction + /fmv/page.tsx list + /fmv/upload wizard with NUCC validation preview
+- [ ] 02-03-PLAN.md — FMV detail + lookup APIs: lib/fmv-lookup.ts + /fmv/[id] detail page + /api/fmv/rate + /api/hcps/search
+
+**Wave 3** *(blocked on Wave 2 completion — Plans 04 and 05 are sequential)*
+- [ ] 02-04-PLAN.md — Engagement form vertical slice: lib/engagement-validation.ts + createEngagement + submitEngagement + HcpSearchInput + FmvRatePanel + EngagementForm + /engagements/page.tsx list + /engagements/new
+- [ ] 02-05-PLAN.md — Engagement lifecycle: approve + reject + complete + delete actions + /engagements/[id] detail + ActionPanel + /engagements/queue + human verification checkpoint
+
+**Cross-cutting constraints:**
+- Plans 02–05: All depend on Wave 1 schema push completing (Engagement, FmvRateCard tables must exist)
+- Plans 04–05: Depend on /api/fmv/rate and /api/hcps/search from Plan 03
+- Plan 05: Depends on createEngagement + submitEngagement from Plan 04
+- All plans: assertRole() from lib/auth.ts enforces role gates on every write action
 
 ### Phase 3: Contracts + Polish
 **Goal:** Compliance officers can generate PDF contracts from templates, store them immutably, and track each contract through its lifecycle.
@@ -85,5 +104,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Auth + HCP Management | 4/4 | Complete | 2026-05-08 |
-| 2. FMV + Engagement | 0/TBD | Not started | - |
+| 2. FMV + Engagement | 0/5 | Not started | - |
 | 3. Contracts + Polish | 0/TBD | Not started | - |
