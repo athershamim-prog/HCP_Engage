@@ -1,6 +1,7 @@
 "use server";
 
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { NppesHcp } from "@/lib/nppes";
 import type { Hcp, Prisma } from "@prisma/client";
@@ -110,4 +111,102 @@ export async function searchHcps(params: {
   ]);
 
   return { hcps, total };
+}
+
+/**
+ * Pure validation helper for setHcpStatus params.
+ * Exported for unit testing without Prisma/Clerk dependencies.
+ */
+export function validateSetStatusParams(params: {
+  reason: string;
+  currentStatus: string;
+  newStatus: string;
+}): { valid: boolean; error?: string } {
+  if (params.reason.trim().length < 10) {
+    return { valid: false, error: "Reason must be at least 10 characters." };
+  }
+  if (params.currentStatus === params.newStatus) {
+    return {
+      valid: false,
+      error: `HCP is already ${params.newStatus.replace(/_/g, " ")}`,
+    };
+  }
+  return { valid: true };
+}
+
+/**
+ * Set HCP status with a mandatory reason.
+ * Compliance role only (D-03, D-14).
+ * Creates an HcpStatusHistory entry and updates Hcp.status atomically.
+ */
+export async function setHcpStatus(params: {
+  hcpId: string;
+  status: "active" | "inactive" | "suspended" | "do_not_engage";
+  reason: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const user = await currentUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const role = (user.publicMetadata as { role?: string }).role;
+  if (role !== "compliance") {
+    return {
+      success: false,
+      error: "Forbidden: only Compliance users can set HCP status",
+    };
+  }
+
+  const validation = validateSetStatusParams({
+    reason: params.reason,
+    currentStatus: "", // will be checked via DB below
+    newStatus: params.status,
+  });
+  if (!validation.valid && validation.error === "Reason must be at least 10 characters.") {
+    return { success: false, error: validation.error };
+  }
+
+  if (params.reason.trim().length < 10) {
+    return { success: false, error: "Reason must be at least 10 characters." };
+  }
+
+  // Verify HCP exists and fetch current status
+  const hcp = await prisma.hcp.findUnique({
+    where: { id: params.hcpId },
+    select: { id: true, status: true },
+  });
+  if (!hcp) return { success: false, error: "HCP not found" };
+
+  // Prevent setting same status (also guarded client-side)
+  if (hcp.status === params.status) {
+    return {
+      success: false,
+      error: `HCP is already ${params.status.replace(/_/g, " ")}`,
+    };
+  }
+
+  try {
+    await prisma.$transaction([
+      prisma.hcpStatusHistory.create({
+        data: {
+          hcpId: params.hcpId,
+          status: params.status,
+          reason: params.reason.trim(),
+          setByClerkId: user.id,
+          setByName: user.fullName ?? "Unknown",
+        },
+      }),
+      prisma.hcp.update({
+        where: { id: params.hcpId },
+        data: { status: params.status },
+      }),
+    ]);
+
+    revalidatePath(`/hcps/${params.hcpId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("setHcpStatus failed:", error);
+    return {
+      success: false,
+      error: "Status could not be saved. Refresh the page and try again.",
+    };
+  }
 }
