@@ -8,6 +8,7 @@ import { HcpStatusBadge, HcpStatusValue } from "@/components/hcp/HcpStatusBadge"
 import { DebarmentBadge, DebarmentStatusValue } from "@/components/hcp/DebarmentBadge";
 import { DebarmentCheckPanel } from "@/components/hcp/DebarmentCheckPanel";
 import { StatusHistoryTimeline } from "@/components/hcp/StatusHistoryTimeline";
+import { HcpStatusPanel } from "@/components/hcp/HcpStatusPanel";
 
 export async function generateMetadata({
   params,
@@ -191,18 +192,12 @@ export default async function HcpProfilePage({
 
       {/* Right sidebar (35%) */}
       <div className="flex-[35] min-w-0 space-y-4">
-        {/* Set HCP Status — Compliance only (Plan 04 implements this panel) */}
+        {/* Set HCP Status — Compliance only */}
         {isCompliance && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-[20px]">Set HCP Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-[14px] text-[hsl(215_16%_47%)]">
-                Status management panel — implemented in next plan.
-              </p>
-            </CardContent>
-          </Card>
+          <HcpStatusPanel
+            hcpId={hcp.id}
+            currentStatus={hcp.status}
+          />
         )}
 
         {/* Quick Facts — both roles */}

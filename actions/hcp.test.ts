@@ -1,27 +1,9 @@
-// Mock external dependencies to avoid DATABASE_URL/Clerk requirements in unit tests
-jest.mock("@/lib/prisma", () => ({
-  prisma: {
-    hcp: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
-    },
-    hcpStatusHistory: {
-      create: jest.fn(),
-    },
-    $transaction: jest.fn(),
-  },
-}));
-
-jest.mock("@clerk/nextjs/server", () => ({
-  currentUser: jest.fn(),
-  auth: jest.fn(),
-}));
-
-jest.mock("next/cache", () => ({
-  revalidatePath: jest.fn(),
-}));
-
-import { validateSetStatusParams } from "./hcp";
+/**
+ * Unit tests for HCP action validation logic.
+ * validateSetStatusParams lives in lib/hcp-validation to avoid "use server"
+ * constraints on synchronous exports.
+ */
+import { validateSetStatusParams } from "@/lib/hcp-validation";
 
 describe("validateSetStatusParams", () => {
   it("returns error when reason is shorter than 10 chars", () => {

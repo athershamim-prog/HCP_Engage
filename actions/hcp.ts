@@ -114,27 +114,6 @@ export async function searchHcps(params: {
 }
 
 /**
- * Pure validation helper for setHcpStatus params.
- * Exported for unit testing without Prisma/Clerk dependencies.
- */
-export function validateSetStatusParams(params: {
-  reason: string;
-  currentStatus: string;
-  newStatus: string;
-}): { valid: boolean; error?: string } {
-  if (params.reason.trim().length < 10) {
-    return { valid: false, error: "Reason must be at least 10 characters." };
-  }
-  if (params.currentStatus === params.newStatus) {
-    return {
-      valid: false,
-      error: `HCP is already ${params.newStatus.replace(/_/g, " ")}`,
-    };
-  }
-  return { valid: true };
-}
-
-/**
  * Set HCP status with a mandatory reason.
  * Compliance role only (D-03, D-14).
  * Creates an HcpStatusHistory entry and updates Hcp.status atomically.
@@ -155,20 +134,12 @@ export async function setHcpStatus(params: {
     };
   }
 
-  const validation = validateSetStatusParams({
-    reason: params.reason,
-    currentStatus: "", // will be checked via DB below
-    newStatus: params.status,
-  });
-  if (!validation.valid && validation.error === "Reason must be at least 10 characters.") {
-    return { success: false, error: validation.error };
-  }
-
+  // Server-side reason length check (T-04-02)
   if (params.reason.trim().length < 10) {
     return { success: false, error: "Reason must be at least 10 characters." };
   }
 
-  // Verify HCP exists and fetch current status
+  // Verify HCP exists and fetch current status (T-04-03)
   const hcp = await prisma.hcp.findUnique({
     where: { id: params.hcpId },
     select: { id: true, status: true },
