@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getEffectiveRoles } from "@/lib/auth";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { Header } from "@/components/shell/Header";
+import { Toaster } from "sonner";
 
 export default async function AppLayout({
   children,
@@ -30,6 +31,7 @@ export default async function AppLayout({
         <Header user={{ fullName: user.fullName ?? "Unknown", imageUrl: user.imageUrl }} />
         <main className="flex-1 overflow-auto p-8">{children}</main>
       </div>
+      <Toaster richColors position="top-right" />
     </div>
   );
 }
