@@ -4,6 +4,11 @@ export const ROUTE_PERMISSIONS: Record<string, AppRole[]> = {
   "/hcps": ["business", "compliance"],
   "/hcps/new": ["business", "compliance"],
   "/dashboard": ["finance"],
+  "/fmv": ["compliance"],
+  "/fmv/upload": ["compliance"],
+  "/engagements": ["business", "compliance", "finance"],
+  "/engagements/new": ["business", "compliance"],
+  "/engagements/queue": ["compliance", "finance"],
 };
 
 export const ROLE_LABELS: Record<AppRole, string> = {
