@@ -26,6 +26,9 @@ export default clerkMiddleware(async (auth, request) => {
   // Server Components perform full effective-role check using getEffectiveRoles().
   const primaryRoles = role ? [role as import("@/lib/auth").AppRole] : [];
 
+  // API routes authenticate themselves internally — skip role check here
+  if (pathname.startsWith("/api/")) return NextResponse.next();
+
   // Check route access using primary role only (conservative — expansion checked in components)
   // Finance users trying /hcps → redirect to /dashboard
   // Business users trying /dashboard → redirect to /hcps
