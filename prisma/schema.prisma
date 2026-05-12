@@ -31,6 +31,7 @@ model Hcp {
 
   statusHistory       HcpStatusHistory[]
   debarmentChecks     DebarmentCheck[]
+  engagements         Engagement[]
 
   @@index([npi])
   @@index([status])
@@ -186,4 +187,124 @@ enum DeterminationOutcome {
   cleared
   confirmed_exclusion
   false_positive
+}
+
+enum FmvRateCardStatus {
+  pending
+  active
+  superseded
+}
+
+enum RateUnit {
+  per_hour
+  per_day
+  per_event
+  flat_fee
+}
+
+enum EngagementType {
+  advisory_board
+  speaker_program
+  investigator_research
+  meal_tov
+  training
+}
+
+enum EngagementStatus {
+  draft
+  submitted
+  approved
+  rejected
+  completed
+}
+
+// ─────────────────────────────────────────────
+// FMV Rate Cards
+// ─────────────────────────────────────────────
+
+model NuccTaxonomy {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  grouping        String?
+  classification  String?
+  specialization  String?
+  displayName     String
+
+  @@index([code])
+}
+
+model FmvRateCard {
+  id                String             @id @default(cuid())
+  version           Int
+  status            FmvRateCardStatus  @default(pending)
+  uploadedByClerkId String
+  uploadedByName    String
+  effectiveFrom     DateTime?
+  effectiveTo       DateTime?
+  rowCount          Int                @default(0)
+  createdAt         DateTime           @default(now())
+
+  rates             FmvRate[]
+
+  @@index([status])
+}
+
+model FmvRate {
+  id              String         @id @default(cuid())
+  rateCardId      String
+  nuccCode        String
+  nuccDisplayName String
+  state           String?
+  engagementType  EngagementType
+  rateUsd         Decimal        @db.Decimal(10, 2)
+  rateUnit        RateUnit
+
+  rateCard        FmvRateCard    @relation(fields: [rateCardId], references: [id], onDelete: Cascade)
+
+  @@index([rateCardId])
+  @@index([rateCardId, nuccCode, engagementType, state])
+}
+
+// ─────────────────────────────────────────────
+// Engagements
+// ─────────────────────────────────────────────
+
+model Engagement {
+  id                  String           @id @default(cuid())
+  hcpId               String
+  engagementType      EngagementType
+  status              EngagementStatus @default(draft)
+  proposedDate        DateTime
+  compensationUsd     Decimal          @db.Decimal(10, 2)
+  description         String
+  submittedByClerkId  String
+  submittedByName     String
+  reviewedByClerkId   String?
+  reviewedByName      String?
+  reviewedAt          DateTime?
+  rejectionReason     String?
+  completedAt         DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  hcp                 Hcp              @relation(fields: [hcpId], references: [id])
+  statusHistory       EngagementStatusHistory[]
+
+  @@index([status])
+  @@index([submittedByClerkId])
+  @@index([hcpId])
+}
+
+model EngagementStatusHistory {
+  id             String           @id @default(cuid())
+  engagementId   String
+  status         EngagementStatus
+  actorClerkId   String
+  actorName      String
+  reason         String?
+  createdAt      DateTime         @default(now())
+
+  engagement     Engagement       @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+
+  @@index([engagementId])
 }
