@@ -1,16 +1,17 @@
 # Phase 3: Contracts + Polish - Context
 
 **Gathered:** 2026-05-14
+**Updated:** 2026-05-14 — contracts/invoice deferred; Phase 3 is polish-only
 **Status:** Ready for planning
 
 <domain>
 ## Phase Boundary
 
-Phase 3 delivers: an invoice PDF generated from approved+completed engagements (with PoP attached) stored immutably in Cloudflare R2 + a schema change to the Engagement model renaming `compensationUsd` to `agreedRateUsd` and adding `noOfActivities` + a "No of Activities" field on the engagement form.
+Phase 3 delivers: polish and hardening of the Phase 1 and Phase 2 work — UI/UX cleanup, edge case handling, and any fixes surfaced by human UAT. No new features.
 
-**In scope:** Invoice PDF generation (fixed layout, no template upload), Cloudflare R2 storage for generated PDFs, Engagement model migration (agreedRateUsd + noOfActivities), invoice generation trigger on the engagement detail page, invoice download action
+**In scope:** UI polish across HCP management, FMV, and engagement flows; fixing any rough edges from Phase 2 human UAT items; general hardening (error states, empty states, loading states, accessibility basics)
 
-**Out of scope:** Contract template upload/versioning (CONT-01 — eliminated in favour of fixed layout), merge field template system, 4-stage contract status lifecycle (CONT-04 — simplified to invoice exists/not exists), DocuSign e-signature (v2), email/send action within the app (Finance receives PDF out-of-band)
+**Out of scope (deferred):** All contract/invoice work (CONT-01–04) — invoice PDF generation, Cloudflare R2 storage, Engagement model migration (agreedRateUsd + noOfActivities) — deferred until contracts are prioritised
 
 </domain>
 
