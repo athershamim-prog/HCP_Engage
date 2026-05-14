@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Paperclip, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -57,6 +57,9 @@ export function ActionPanel({
   const [legalFeedback, setLegalFeedback] = useState("");
   const [popUrl, setPopUrl] = useState(popDocumentUrl ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwner = submittedByClerkId === currentUserClerkId;
   const isCompliance = effectiveRoles.includes("compliance");
@@ -70,6 +73,28 @@ export function ActionPanel({
   const canReject = rejectionCharCount >= 10;
   const legalFeedbackCharCount = legalFeedback.trim().length;
   const canReturnFromLegal = legalFeedbackCharCount >= 10;
+
+  async function handleFileUpload(file: File) {
+    setUploadStatus("uploading");
+    setError(null);
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await fetch("/api/engagements/pop-upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) {
+        setUploadStatus("error");
+        setError(data.error ?? "Upload failed.");
+      } else {
+        setPopUrl(data.url);
+        setUploadedFileName(file.name);
+        setUploadStatus("uploaded");
+      }
+    } catch {
+      setUploadStatus("error");
+      setError("Upload failed. Please try again.");
+    }
+  }
 
   function wrap(fn: () => Promise<{ success: boolean; error?: string }>, successMsg: string, redirect?: string) {
     setError(null);
@@ -222,24 +247,71 @@ export function ActionPanel({
     return (
       <Card>
         <CardHeader><CardTitle className="text-[20px]">Attach Proof of Performance</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <p className="text-[13px] text-[hsl(215_16%_47%)]">
-            The engagement has been approved. Attach a document reference confirming the activity was completed.
+            The engagement has been approved. Attach a file or enter a document reference confirming the activity was completed.
           </p>
+
+          {/* File upload */}
           <div>
             <label className="block text-[12px] font-semibold text-[hsl(220_13%_18%)] mb-1">
-              PoP Document Reference <span className="text-[hsl(0_72%_51%)]">*</span>
+              Upload a file
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.docx"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileUpload(file);
+              }}
+              disabled={isPending || uploadStatus === "uploading"}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isPending || uploadStatus === "uploading"}
+              className="w-full h-11"
+            >
+              {uploadStatus === "uploading" ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" />Uploading...</>
+              ) : uploadStatus === "uploaded" ? (
+                <><CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />{uploadedFileName}</>
+              ) : (
+                <><Paperclip className="h-4 w-4 mr-2" />Choose file</>
+              )}
+            </Button>
+            <p className="text-[11px] text-[hsl(215_16%_47%)] mt-1">PDF, PNG, JPG, DOCX · max 5 MB</p>
+          </div>
+
+          {/* OR divider */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px bg-[hsl(215_16%_87%)]" />
+            <span className="text-[11px] text-[hsl(215_16%_60%)]">or</span>
+            <div className="flex-1 h-px bg-[hsl(215_16%_87%)]" />
+          </div>
+
+          {/* Manual reference */}
+          <div>
+            <label className="block text-[12px] font-semibold text-[hsl(220_13%_18%)] mb-1">
+              Document reference
             </label>
             <Input
-              value={popUrl}
-              onChange={(e) => setPopUrl(e.target.value)}
+              value={popUrl.startsWith("/api/engagements/pop-file/") ? "" : popUrl}
+              onChange={(e) => {
+                setPopUrl(e.target.value);
+                if (uploadStatus === "uploaded") setUploadStatus("idle");
+              }}
               placeholder="e.g., SharePoint link, document ID, or file name"
               disabled={isPending}
             />
           </div>
+
           <Button
             onClick={() => wrap(() => attachPopAction(engagementId, popUrl), "Proof of Performance submitted.")}
-            disabled={isPending || !popUrl.trim()}
+            disabled={isPending || !popUrl.trim() || uploadStatus === "uploading"}
             className="w-full h-11 bg-[hsl(221_83%_53%)] hover:bg-[hsl(221_83%_47%)] text-white disabled:opacity-50"
           >
             {isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Submitting...</> : "Submit PoP"}
@@ -262,9 +334,21 @@ export function ActionPanel({
         <CardHeader><CardTitle className="text-[20px]">Review Proof of Performance</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           {popDocumentUrl && (
-            <p className="text-[13px] text-[hsl(220_13%_18%)] break-words">
-              <span className="font-semibold">PoP Reference:</span> {popDocumentUrl}
-            </p>
+            <div className="text-[13px]">
+              <span className="font-semibold text-[hsl(220_13%_18%)]">PoP Reference: </span>
+              {popDocumentUrl.startsWith("/api/engagements/pop-file/") ? (
+                <a
+                  href={popDocumentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[hsl(221_83%_53%)] hover:underline"
+                >
+                  View attached file ↗
+                </a>
+              ) : (
+                <span className="text-[hsl(220_13%_18%)] break-words">{popDocumentUrl}</span>
+              )}
+            </div>
           )}
           <Button
             onClick={() => wrap(() => sendToFinanceAction(engagementId), "Sent to Finance for payment processing.")}
