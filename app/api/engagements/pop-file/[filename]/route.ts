@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { readFile } from "fs/promises";
-import { join } from "path";
+import { resolve, sep } from "path";
+
+const UPLOAD_DIR = resolve(process.cwd(), "uploads", "pop");
 
 const CONTENT_TYPES: Record<string, string> = {
   pdf: "application/pdf",
@@ -20,12 +22,16 @@ export async function GET(
 
   const { filename } = await params;
 
-  // Prevent path traversal
-  if (!filename || /[/\\.]\./.test(filename) || filename.includes("..")) {
+  // Prevent path traversal — resolve then assert prefix
+  if (!filename) {
+    return new NextResponse("Bad Request", { status: 400 });
+  }
+  const resolved = resolve(UPLOAD_DIR, filename);
+  if (!resolved.startsWith(UPLOAD_DIR + sep)) {
     return new NextResponse("Bad Request", { status: 400 });
   }
 
-  const filePath = join(process.cwd(), "uploads", "pop", filename);
+  const filePath = resolved;
 
   let buffer: Buffer;
   try {
