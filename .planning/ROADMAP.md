@@ -2,10 +2,10 @@
 
 ## Overview
 
-Three phases carry HCP Engage from zero to a working compliance platform. Each phase closes a complete, usable capability: users can log in and manage HCPs after Phase 1, run engagements through a simple approval workflow after Phase 2, and generate PDF contracts after Phase 3.
+Four phases carry HCP Engage from zero to a working compliance platform. Each phase closes a complete, usable capability: users can log in and manage HCPs after Phase 1, run engagements through a simple approval workflow after Phase 2, attach Proof of Performance after Phase 3, and generate invoices after Phase 4.
 
 **Milestone:** v1.0 — Core Compliance Platform (Simplified)
-**Total Phases:** 3
+**Total Phases:** 4
 **Requirements:** 17 v1 requirements
 
 ---
@@ -14,7 +14,8 @@ Three phases carry HCP Engage from zero to a working compliance platform. Each p
 
 - [x] **Phase 1: Auth + HCP Management** - Role-based access (3 roles) and full HCP onboarding with NPI lookup and manual debarment check
 - [x] **Phase 2: FMV + Engagement** - Rate card upload and display, engagement submission with simple status flow and single approval
-- [ ] **Phase 3: Contracts + Polish** - PoP file upload, Legal role + expanded approval workflow, UI polish and hardening
+- [x] **Phase 3: Contracts + Polish** - PoP file upload, Legal role + expanded approval workflow, UI polish and hardening
+- [ ] **Phase 4: Invoice Generation** - PDF invoice generation for completed engagements, Cloudflare R2 storage, engagement form updated for rate × activities compensation model
 
 ---
 
@@ -100,14 +101,45 @@ Plans:
 **Wave 1**
 - [x] 03-01-PLAN.md — PoP file upload: pop-upload + pop-file API routes, ActionPanel file upload UI, detail page link rendering
 
+### Phase 4: Invoice Generation
+**Goal:** Compliance can generate a fixed-layout PDF invoice for completed, PoP-attached engagements; the invoice is stored write-once in Cloudflare R2; the engagement form captures agreedRateUsd (per-unit rate agreed with HCP) and noOfActivities (for per_hour/per_day rate types) so total compensation = agreedRateUsd × noOfActivities.
+**Mode:** mvp
+**Depends on:** Phase 3
+**Requirements:** CONT-02, CONT-03
+**Note:** CONT-01 (template upload) and CONT-04 (lifecycle stages) remain deferred to v2. Invoice is a simplified reframe of CONT-02/03 per decisions in 03-CONTEXT.md D-01 through D-14.
+**Success Criteria** (what must be TRUE):
+  1. Compliance can click "Generate Invoice" on a completed engagement (status = completed AND popDocumentUrl set) and a fixed-layout PDF invoice is generated and stored in R2; subsequent visits show "Download Invoice" (no regeneration).
+  2. The engagement form shows "No of Activities" when the FMV rate unit is per_hour or per_day; total compensation = agreedRateUsd × noOfActivities for those types; for flat_fee/per_event, total = agreedRateUsd and the field is hidden.
+  3. The Invoice DB record exists with a unique engagementId constraint (one invoice per engagement) and a write-once R2 URL — no overwrite path is exposed through the application.
+  4. Finance users see a "Download Invoice" button (read-only) on the engagement detail page once an invoice exists.
+**Plans:** 3 plans
+
+Plans:
+
+**Wave 1** *(BLOCKING — Waves 2 and 3 depend on schema migration completing)*
+- [ ] 04-01-PLAN.md — Schema + Foundation: Prisma rename migration (compensationUsd→agreedRateUsd), noOfActivities field, Invoice model; install @react-pdf/renderer@4.5.1 and @aws-sdk/client-s3@3.1046.0; update next.config.ts and .env.example; rename field across all 10 affected files; Wave 0 test stubs
+
+**Wave 2** *(blocked on Wave 1 — Plans run sequentially due to shared lib/ files)*
+- [ ] 04-02-PLAN.md — Invoice Logic + Route Handler: lib/r2.ts (S3Client for R2), lib/invoice-calc.ts (pure calculateInvoiceTotal), components/pdf/InvoiceDocument.tsx (react-pdf Document), app/api/engagements/[id]/invoice/route.ts (POST: auth + role gate + PDF generate + R2 upload + DB write)
+
+**Wave 3** *(blocked on Wave 2 — UI depends on Route Handler and Invoice model)*
+- [ ] 04-03-PLAN.md — UI Integration: FmvRatePanel onRateLoaded callback, EngagementForm noOfActivities conditional field, ActionPanel Generate/Download Invoice buttons, engagement detail page Invoice relation + human verification checkpoint
+
+**Cross-cutting constraints:**
+- Plans 02–03: All depend on Wave 1 schema migration completing (agreedRateUsd and Invoice table must exist in DB)
+- Plan 02: Route Handler depends on lib/r2.ts, lib/invoice-calc.ts, and InvoiceDocument.tsx being in the same plan
+- Plan 03: ActionPanel and detail page depend on Invoice model (Wave 1) and Route Handler URL (Wave 2)
+- All plans: assertRole() from lib/auth.ts enforces compliance-only gate on invoice generation
+
 ---
 
 ## Progress
 
-**Execution Order:** Phases execute in numeric order: 1 → 2 → 3
+**Execution Order:** Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Auth + HCP Management | 4/4 | Complete | 2026-05-08 |
 | 2. FMV + Engagement | 5/5 | Complete | 2026-05-12 |
-| 3. Contracts + Polish | 1/1 | In progress | - |
+| 3. Contracts + Polish | 1/1 | Complete | 2026-05-14 |
+| 4. Invoice Generation | 0/3 | Planning | — |
