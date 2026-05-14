@@ -22,10 +22,9 @@ export async function generateMetadata({
     where: { id },
     include: { hcp: { select: { fullName: true } } },
   });
+  if (!engagement) return { title: "Engagement Not Found — HCP Engage" };
   return {
-    title: engagement
-      ? `${ENGAGEMENT_TYPE_LABELS[engagement.engagementType] ?? engagement.engagementType} — ${engagement.hcp.fullName} — HCP Engage`
-      : "Engagement Not Found — HCP Engage",
+    title: `${ENGAGEMENT_TYPE_LABELS[engagement.engagementType] ?? engagement.engagementType} — ${engagement.hcp.fullName} — HCP Engage`,
   };
 }
 
