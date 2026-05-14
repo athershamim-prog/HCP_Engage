@@ -238,9 +238,20 @@ export default async function EngagementDetailPage({
             </CardHeader>
             <CardContent>
               <p className="text-[12px] text-[hsl(215_16%_47%)] mb-1">Document Reference</p>
-              <p className="text-[14px] text-[hsl(220_13%_18%)] break-words">
-                {engagement.popDocumentUrl}
-              </p>
+              {engagement.popDocumentUrl.startsWith("/api/engagements/pop-file/") ? (
+                <a
+                  href={engagement.popDocumentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[14px] text-[hsl(221_83%_53%)] hover:underline break-words"
+                >
+                  View attached file ↗
+                </a>
+              ) : (
+                <p className="text-[14px] text-[hsl(220_13%_18%)] break-words">
+                  {engagement.popDocumentUrl}
+                </p>
+              )}
             </CardContent>
           </Card>
         )}
