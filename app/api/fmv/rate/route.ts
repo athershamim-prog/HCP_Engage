@@ -15,6 +15,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const activeCard = await prisma.fmvRateCard.findFirst({
+      where: { status: "active" },
+      select: { id: true },
+    });
+    if (!activeCard) return NextResponse.json({ rate: null, noActiveCard: true });
+
     const hcp = await prisma.hcp.findUnique({
       where: { id: hcpId },
       select: { nuccCode: true, primaryState: true },

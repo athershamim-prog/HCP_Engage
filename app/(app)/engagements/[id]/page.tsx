@@ -9,6 +9,8 @@ import { EngagementStatusBadge } from "@/components/engagement/EngagementStatusB
 import type { EngagementStatusValue } from "@/components/engagement/EngagementStatusBadge";
 import { ActionPanel } from "@/components/engagement/ActionPanel";
 import { ENGAGEMENT_TYPE_LABELS } from "@/components/engagement/EngagementTable";
+import { DebarmentCheckPanel } from "@/components/hcp/DebarmentCheckPanel";
+import { getFmvRate } from "@/lib/fmv-lookup";
 
 export async function generateMetadata({
   params,
@@ -49,16 +51,41 @@ export default async function EngagementDetailPage({
     effectiveRoles.includes("business") &&
     !effectiveRoles.includes("compliance") &&
     !effectiveRoles.includes("finance");
+  const isCompliance = effectiveRoles.includes("compliance");
 
   const engagement = await prisma.engagement.findUnique({
     where: { id },
     include: {
       hcp: {
         select: {
+          id: true,
           fullName: true,
           npi: true,
+          nuccCode: true,
           nuccDisplayName: true,
           primaryState: true,
+          debarmentCheckedAt: true,
+          debarmentChecks: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: {
+              id: true,
+              oigHit: true,
+              samHit: true,
+              oigMatchJson: true,
+              samMatchJson: true,
+              createdAt: true,
+              determination: {
+                select: {
+                  outcome: true,
+                  rationale: true,
+                  recordedByName: true,
+                  createdAt: true,
+                  checkId: true,
+                },
+              },
+            },
+          },
         },
       },
       statusHistory: { orderBy: { createdAt: "desc" } },
@@ -68,6 +95,14 @@ export default async function EngagementDetailPage({
 
   // Business user ownership check — returns 404 to avoid leaking existence (Pitfall 5, T-02-05-05)
   if (isBusinessRole && engagement.submittedByClerkId !== user.id) notFound();
+
+  // FMV rate lookup — non-blocking; null means no active card or no matching rate
+  const fmvRate = await getFmvRate({
+    nuccCode: engagement.hcp.nuccCode,
+    state: engagement.hcp.primaryState,
+    engagementType: engagement.engagementType,
+    prisma,
+  }).catch(() => null);
 
   // Serialize Decimal for display
   const compensationDisplay = parseFloat(engagement.compensationUsd.toString()).toFixed(2);
@@ -138,18 +173,57 @@ export default async function EngagementDetailPage({
           </CardContent>
         </Card>
 
+        {/* Debarment Status card — compliance only */}
+        {isCompliance && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[20px]">Debarment Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DebarmentCheckPanel
+                hcpId={engagement.hcp.id}
+                isCompliance={true}
+                initialCheck={
+                  engagement.hcp.debarmentChecks[0]
+                    ? {
+                        ...engagement.hcp.debarmentChecks[0],
+                        oigMatchJson: engagement.hcp.debarmentChecks[0].oigMatchJson as Record<string, unknown> | null,
+                        samMatchJson: engagement.hcp.debarmentChecks[0].samMatchJson as Record<string, unknown> | null,
+                      }
+                    : null
+                }
+                debarmentCheckedAt={engagement.hcp.debarmentCheckedAt}
+              />
+            </CardContent>
+          </Card>
+        )}
+
         {/* FMV Reference card */}
         <Card>
           <CardHeader>
             <CardTitle className="text-[20px]">FMV Reference</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-[14px] text-[hsl(215_16%_47%)]">
-              Rate data displayed for reference only.
-            </p>
-            <p className="text-[12px] text-[hsl(215_16%_47%)] italic mt-1">
-              (Rate shown for reference at time of submission — not enforced)
-            </p>
+            {fmvRate ? (
+              <div className="space-y-1">
+                <p className="text-[12px] text-[hsl(215_16%_47%)]">
+                  {fmvRate.nuccDisplayName} / {ENGAGEMENT_TYPE_LABELS[fmvRate.engagementType] ?? fmvRate.engagementType} / {fmvRate.state ?? "National"}
+                </p>
+                <p className="text-[14px] font-medium text-[hsl(220_13%_18%)]">
+                  ${Number(fmvRate.rateUsd).toFixed(2)}{" "}
+                  <span className="text-[hsl(215_16%_47%)] font-normal">
+                    {fmvRate.rateUnit.replace(/_/g, " ")}
+                  </span>
+                </p>
+                <p className="text-[12px] text-[hsl(215_16%_47%)] italic">
+                  Shown for reference only. Not enforced at submission.
+                </p>
+              </div>
+            ) : (
+              <p className="text-[14px] text-[hsl(215_16%_47%)]">
+                No FMV rate on file for this specialty and engagement type.
+              </p>
+            )}
           </CardContent>
         </Card>
 

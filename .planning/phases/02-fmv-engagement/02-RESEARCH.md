@@ -888,22 +888,25 @@ export const ROUTE_PERMISSIONS: Record<string, AppRole[]> = {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **NUCC seed data volume**
    - What we know: Full NUCC taxonomy v25.1 has ~900 codes. Pharma-relevant codes (physicians, nurses, advanced practitioners) are ~150–200.
    - What's unclear: Does the client need all 900 codes or only physician/NP/PA specialties? A 900-row seed is fine for dev; for demo it may be noise.
    - Recommendation: Seed the 20–30 most common pharma engagement specialties as fixture data; add a comment in seed.ts noting the full dataset can replace it.
+   - **RESOLVED:** Seed 25 most common pharma-relevant NUCC codes as a static fixture in prisma/seed.ts. The full 900-code dataset can replace it by swapping the fixture array — no schema change required.
 
 2. **Rate card CSV column name tolerance**
    - What we know: D-02 specifies column names as `specialty_code | state | engagement_type | rate_usd | rate_unit`.
    - What's unclear: Will real client rate cards use these exact names or common variants (e.g., "Specialty Code", "specialty", "State/Region")?
    - Recommendation: Normalize column names to lowercase + underscores during parse (replace spaces with underscores, strip special chars) so `"Specialty Code"` matches `"specialty_code"`. Add as a note in the upload wizard.
+   - **RESOLVED:** Implemented in `parseRateCardBuffer` via a `normalizeHeader(key)` helper: `key.trim().toLowerCase().replace(/[\s/]+/g, "_")`. So "Specialty Code" → "specialty_code", "Rate USD" → "rate_usd", "State/Region" → "state_region". Tested with a dedicated test case in fmv-parser.test.ts.
 
 3. **Prisma `Decimal` precision in JS client**
    - What we know: Prisma returns `Decimal` as a special Decimal.js object, not a JS `number`.
    - What's unclear: Are there any display utilities already in the project for formatting currency?
    - Recommendation: Add a `formatCurrency(value: Decimal | number): string` helper to `lib/utils.ts` using `.toFixed(2)` with a `$` prefix.
+   - **RESOLVED:** Use inline `.toFixed(2)` at all display points (e.g. `$${parseFloat(rate.rateUsd.toString()).toFixed(2)}`). A `formatCurrency` helper in lib/utils.ts is deferred to v2 — not enough usage sites in Phase 2 to justify the extraction.
 
 ---
 

@@ -35,6 +35,15 @@ async function main() {
         specialty: "Cardiology",
         state: "NY",
       },
+      {
+        lastName: "LASKOWSKI",
+        firstName: "THOMAS",
+        npi: "1003000126",
+        exclusionType: "1128a1",
+        exclusionDate: "03/20/2018",
+        specialty: "Family Medicine",
+        state: "IL",
+      },
     ],
     skipDuplicates: true,
   });

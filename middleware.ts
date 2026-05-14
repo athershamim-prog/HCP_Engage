@@ -29,12 +29,17 @@ export default clerkMiddleware(async (auth, request) => {
   // API routes authenticate themselves internally — skip role check here
   if (pathname.startsWith("/api/")) return NextResponse.next();
 
+  // Users with no role assigned would loop forever — send them back to sign-in
+  if (!role) {
+    const signInUrl = new URL("/sign-in", request.url);
+    return NextResponse.redirect(signInUrl);
+  }
+
   // Check route access using primary role only (conservative — expansion checked in components)
   // Finance users trying /hcps → redirect to /dashboard
   // Business users trying /dashboard → redirect to /hcps
   if (!canAccessRoute({ effectiveRoles: primaryRoles, route: pathname })) {
-    const role_ = role as string | undefined;
-    const fallback = role_ === "finance" ? "/dashboard" : "/hcps";
+    const fallback = role === "finance" ? "/dashboard" : "/hcps";
     return NextResponse.redirect(new URL(fallback, request.url));
   }
 

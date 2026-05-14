@@ -1,7 +1,8 @@
 ---
 phase: 1
 slug: auth-hcp-management
-status: draft
+status: approved
+reviewed_at: 2026-05-07
 shadcn_initialized: false
 preset: none
 created: 2026-05-07
