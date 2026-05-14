@@ -1,14 +1,27 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-export type EngagementStatusValue = "draft" | "submitted" | "approved" | "rejected" | "completed";
+export type EngagementStatusValue =
+  | "draft"
+  | "submitted"
+  | "legal_review"
+  | "compliance_review"
+  | "approved"
+  | "pop_submitted"
+  | "finance_review"
+  | "completed"
+  | "rejected";
 
 const STATUS_CONFIG: Record<EngagementStatusValue, { label: string; className: string }> = {
-  draft:     { label: "Draft",     className: "bg-[hsl(215_16%_65%)] text-white border-transparent" },
-  submitted: { label: "Submitted", className: "bg-[hsl(221_83%_53%)] text-white border-transparent" },
-  approved:  { label: "Approved",  className: "bg-[hsl(142_71%_45%)] text-white border-transparent" },
-  rejected:  { label: "Rejected",  className: "bg-[hsl(0_72%_51%)] text-white border-transparent" },
-  completed: { label: "Completed", className: "bg-[hsl(220_13%_46%)] text-white border-transparent" },
+  draft:             { label: "Draft",             className: "bg-[hsl(215_16%_65%)] text-white border-transparent" },
+  submitted:         { label: "Submitted",         className: "bg-[hsl(221_83%_53%)] text-white border-transparent" },
+  legal_review:      { label: "Legal Review",      className: "bg-[hsl(270_60%_55%)] text-white border-transparent" },
+  compliance_review: { label: "Compliance Review", className: "bg-[hsl(221_83%_53%)] text-white border-transparent" },
+  approved:          { label: "Approved",          className: "bg-[hsl(142_71%_45%)] text-white border-transparent" },
+  pop_submitted:     { label: "PoP Submitted",     className: "bg-[hsl(38_92%_50%)] text-white border-transparent" },
+  finance_review:    { label: "Finance Review",    className: "bg-[hsl(199_89%_48%)] text-white border-transparent" },
+  completed:         { label: "Completed",         className: "bg-[hsl(220_13%_46%)] text-white border-transparent" },
+  rejected:          { label: "Rejected",          className: "bg-[hsl(0_72%_51%)] text-white border-transparent" },
 };
 
 export function EngagementStatusBadge({ status }: { status: EngagementStatusValue }) {

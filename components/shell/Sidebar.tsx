@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, UserPlus, LayoutDashboard, FileSpreadsheet, ClipboardList, Plus, CheckSquare } from "lucide-react";
+import { Users, UserPlus, LayoutDashboard, FileSpreadsheet, ClipboardList, Plus, CheckSquare, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AppRole } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/auth";
@@ -36,7 +36,7 @@ const NAV_ITEMS = [
     label: "Engagements",
     href: "/engagements",
     icon: ClipboardList,
-    allowedRoles: ["business", "compliance", "finance"] as AppRole[],
+    allowedRoles: ["business", "compliance", "finance", "legal"] as AppRole[],
   },
   {
     label: "New Engagement",
@@ -45,10 +45,16 @@ const NAV_ITEMS = [
     allowedRoles: ["business", "compliance"] as AppRole[],
   },
   {
-    label: "Approval Queue",
+    label: "Compliance Queue",
     href: "/engagements/queue",
     icon: CheckSquare,
     allowedRoles: ["compliance", "finance"] as AppRole[],
+  },
+  {
+    label: "Legal Queue",
+    href: "/engagements/legal-queue",
+    icon: Scale,
+    allowedRoles: ["legal", "compliance"] as AppRole[],
   },
 ];
 

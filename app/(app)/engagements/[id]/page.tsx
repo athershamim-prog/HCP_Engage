@@ -93,8 +93,11 @@ export default async function EngagementDetailPage({
   });
   if (!engagement) notFound();
 
+  const isLegal = effectiveRoles.includes("legal");
+
   // Business user ownership check — returns 404 to avoid leaking existence (Pitfall 5, T-02-05-05)
-  if (isBusinessRole && engagement.submittedByClerkId !== user.id) notFound();
+  // Legal users can view all engagements assigned for legal review
+  if (isBusinessRole && !isLegal && engagement.submittedByClerkId !== user.id) notFound();
 
   // FMV rate lookup — non-blocking; null means no active card or no matching rate
   const fmvRate = await getFmvRate({
@@ -227,6 +230,21 @@ export default async function EngagementDetailPage({
           </CardContent>
         </Card>
 
+        {/* Proof of Performance card — shown once PoP is attached */}
+        {engagement.popDocumentUrl && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[20px]">Proof of Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-[12px] text-[hsl(215_16%_47%)] mb-1">Document Reference</p>
+              <p className="text-[14px] text-[hsl(220_13%_18%)] break-words">
+                {engagement.popDocumentUrl}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Status History card */}
         <Card>
           <CardHeader>
@@ -284,6 +302,7 @@ export default async function EngagementDetailPage({
           currentUserClerkId={user.id}
           effectiveRoles={effectiveRoles}
           rejectionReason={engagement.rejectionReason}
+          popDocumentUrl={engagement.popDocumentUrl}
         />
       </div>
     </div>

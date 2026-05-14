@@ -39,7 +39,9 @@ export default clerkMiddleware(async (auth, request) => {
   // Finance users trying /hcps → redirect to /dashboard
   // Business users trying /dashboard → redirect to /hcps
   if (!canAccessRoute({ effectiveRoles: primaryRoles, route: pathname })) {
-    const fallback = role === "finance" ? "/dashboard" : "/hcps";
+    let fallback = "/hcps";
+    if (role === "finance") fallback = "/dashboard";
+    else if (role === "legal") fallback = "/engagements/legal-queue";
     return NextResponse.redirect(new URL(fallback, request.url));
   }
 

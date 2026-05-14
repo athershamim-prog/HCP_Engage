@@ -68,27 +68,75 @@ describe("validateRejectionReason", () => {
   });
 });
 
-describe("validateStateTransition", () => {
-  it("allows draft → submitted transition", () => {
+describe("validateStateTransition — new workflow", () => {
+  // Core happy-path transitions
+  it("allows draft → submitted", () => {
     expect(validateStateTransition("draft", "submitted").valid).toBe(true);
   });
-  it("allows submitted → approved transition", () => {
+  it("allows submitted → legal_review", () => {
+    expect(validateStateTransition("submitted", "legal_review").valid).toBe(true);
+  });
+  it("allows submitted → approved (Compliance approves, Business attaches PoP)", () => {
     expect(validateStateTransition("submitted", "approved").valid).toBe(true);
   });
-  it("allows submitted → rejected transition", () => {
+  it("allows submitted → finance_review (Compliance sends directly to Finance)", () => {
+    expect(validateStateTransition("submitted", "finance_review").valid).toBe(true);
+  });
+  it("allows submitted → rejected", () => {
     expect(validateStateTransition("submitted", "rejected").valid).toBe(true);
   });
-  it("allows approved → completed transition", () => {
-    expect(validateStateTransition("approved", "completed").valid).toBe(true);
+  it("allows legal_review → compliance_review (Legal returns to Compliance)", () => {
+    expect(validateStateTransition("legal_review", "compliance_review").valid).toBe(true);
   });
-  it("rejects draft → approved transition (must go through submitted)", () => {
+  it("allows legal_review → pop_submitted (Legal returns to PoP stage)", () => {
+    expect(validateStateTransition("legal_review", "pop_submitted").valid).toBe(true);
+  });
+  it("allows compliance_review → legal_review", () => {
+    expect(validateStateTransition("compliance_review", "legal_review").valid).toBe(true);
+  });
+  it("allows compliance_review → approved", () => {
+    expect(validateStateTransition("compliance_review", "approved").valid).toBe(true);
+  });
+  it("allows compliance_review → finance_review", () => {
+    expect(validateStateTransition("compliance_review", "finance_review").valid).toBe(true);
+  });
+  it("allows compliance_review → rejected", () => {
+    expect(validateStateTransition("compliance_review", "rejected").valid).toBe(true);
+  });
+  it("allows approved → pop_submitted (Business attaches PoP)", () => {
+    expect(validateStateTransition("approved", "pop_submitted").valid).toBe(true);
+  });
+  it("allows pop_submitted → legal_review (Compliance sends PoP to Legal)", () => {
+    expect(validateStateTransition("pop_submitted", "legal_review").valid).toBe(true);
+  });
+  it("allows pop_submitted → finance_review (Compliance routes to Finance)", () => {
+    expect(validateStateTransition("pop_submitted", "finance_review").valid).toBe(true);
+  });
+  it("allows pop_submitted → rejected", () => {
+    expect(validateStateTransition("pop_submitted", "rejected").valid).toBe(true);
+  });
+  it("allows finance_review → completed", () => {
+    expect(validateStateTransition("finance_review", "completed").valid).toBe(true);
+  });
+  it("allows finance_review → rejected", () => {
+    expect(validateStateTransition("finance_review", "rejected").valid).toBe(true);
+  });
+
+  // Invalid transitions
+  it("rejects draft → approved (must go through submitted)", () => {
     expect(validateStateTransition("draft", "approved").valid).toBe(false);
   });
-  it("rejects completed → any transition (terminal state)", () => {
+  it("rejects completed → any (terminal state)", () => {
     expect(validateStateTransition("completed", "draft").valid).toBe(false);
     expect(validateStateTransition("completed", "submitted").valid).toBe(false);
   });
-  it("rejects rejected → any transition (terminal state)", () => {
+  it("rejects rejected → any (terminal state)", () => {
     expect(validateStateTransition("rejected", "submitted").valid).toBe(false);
+  });
+  it("rejects approved → completed (must go through pop_submitted → finance_review)", () => {
+    expect(validateStateTransition("approved", "completed").valid).toBe(false);
+  });
+  it("rejects submitted → completed (must follow full workflow)", () => {
+    expect(validateStateTransition("submitted", "completed").valid).toBe(false);
   });
 });

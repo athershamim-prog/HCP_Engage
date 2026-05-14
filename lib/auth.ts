@@ -1,4 +1,4 @@
-export type AppRole = "business" | "compliance" | "finance";
+export type AppRole = "business" | "compliance" | "finance" | "legal";
 
 export const ROUTE_PERMISSIONS: Record<string, AppRole[]> = {
   "/hcps": ["business", "compliance"],
@@ -6,21 +6,24 @@ export const ROUTE_PERMISSIONS: Record<string, AppRole[]> = {
   "/dashboard": ["finance"],
   "/fmv": ["compliance"],
   "/fmv/upload": ["compliance"],
-  "/engagements": ["business", "compliance", "finance"],
+  "/engagements": ["business", "compliance", "finance", "legal"],
   "/engagements/new": ["business", "compliance"],
   "/engagements/queue": ["compliance", "finance"],
+  "/engagements/legal-queue": ["legal", "compliance"],
 };
 
 export const ROLE_LABELS: Record<AppRole, string> = {
   business: "Business User",
   compliance: "Compliance Officer",
   finance: "Finance User",
+  legal: "Legal Counsel",
 };
 
 export const ROLE_DEFAULT_ROUTES: Record<AppRole, string> = {
   business: "/hcps",
   compliance: "/hcps",
   finance: "/dashboard",
+  legal: "/engagements/legal-queue",
 };
 
 /**
@@ -38,7 +41,7 @@ export function getEffectiveRoles(params: {
 
   const all = new Set<AppRole>([primary]);
   for (const g of grants) {
-    if (g === "business" || g === "compliance" || g === "finance") {
+    if (g === "business" || g === "compliance" || g === "finance" || g === "legal") {
       all.add(g as AppRole);
     }
   }

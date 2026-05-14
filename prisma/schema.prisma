@@ -213,9 +213,13 @@ enum EngagementType {
 enum EngagementStatus {
   draft
   submitted
-  approved
-  rejected
+  legal_review       // with Legal — return state stored in legalReviewReturnStatus
+  compliance_review  // back with Compliance after Legal feedback
+  approved           // Compliance approved; Business must attach PoP
+  pop_submitted      // Business attached PoP; Compliance routes to Finance
+  finance_review     // with Finance
   completed
+  rejected
 }
 
 // ─────────────────────────────────────────────
@@ -282,10 +286,12 @@ model Engagement {
   reviewedByClerkId   String?
   reviewedByName      String?
   reviewedAt          DateTime?
-  rejectionReason     String?
-  completedAt         DateTime?
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  rejectionReason          String?
+  completedAt              DateTime?
+  legalReviewReturnStatus  EngagementStatus?  // where to return after Legal review
+  popDocumentUrl           String?            // PoP document URL or reference (attached by Business)
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
 
   hcp                 Hcp              @relation(fields: [hcpId], references: [id])
   statusHistory       EngagementStatusHistory[]

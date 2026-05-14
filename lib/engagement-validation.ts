@@ -13,12 +13,22 @@ const VALID_ENGAGEMENT_TYPES = [
 ] as const;
 
 // Valid state machine transitions (D-08, D-09, D-11, ENG-02)
+// New workflow: submitted → legal_review/approved/finance_review/rejected
+//   legal_review → compliance_review | pop_submitted (via legalReviewReturnStatus)
+//   compliance_review → legal_review/approved/finance_review/rejected
+//   approved → pop_submitted (Business attaches PoP)
+//   pop_submitted → legal_review/finance_review/rejected (Compliance routes)
+//   finance_review → completed/rejected
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  draft: ["submitted"],
-  submitted: ["approved", "rejected"],
-  approved: ["completed"],
-  rejected: [],    // terminal
-  completed: [],   // terminal
+  draft:             ["submitted"],
+  submitted:         ["legal_review", "approved", "finance_review", "rejected"],
+  legal_review:      ["compliance_review", "pop_submitted"],
+  compliance_review: ["legal_review", "approved", "finance_review", "rejected"],
+  approved:          ["pop_submitted"],
+  pop_submitted:     ["legal_review", "finance_review", "rejected"],
+  finance_review:    ["completed", "rejected"],
+  rejected:          [],
+  completed:         [],
 };
 
 export function validateEngagementFields(params: {
