@@ -13,8 +13,8 @@ Three phases carry HCP Engage from zero to a working compliance platform. Each p
 ## Phases
 
 - [x] **Phase 1: Auth + HCP Management** - Role-based access (3 roles) and full HCP onboarding with NPI lookup and manual debarment check
-- [ ] **Phase 2: FMV + Engagement** - Rate card upload and display, engagement submission with simple status flow and single approval
-- [ ] **Phase 3: Contracts + Polish** - PDF contract generation from templates, cloud storage, contract status tracking
+- [x] **Phase 2: FMV + Engagement** - Rate card upload and display, engagement submission with simple status flow and single approval
+- [ ] **Phase 3: Contracts + Polish** - PoP file upload, Legal role + expanded approval workflow, UI polish and hardening
 
 ---
 
@@ -84,16 +84,21 @@ Plans:
 - All plans: assertRole() from lib/auth.ts enforces role gates on every write action
 
 ### Phase 3: Contracts + Polish
-**Goal:** Compliance officers can generate PDF contracts from templates, store them immutably, and track each contract through its lifecycle.
+**Goal:** Business users can upload actual PoP documents (files) when closing engagements; the expanded approval workflow (Legal role, compliance_review/legal_review/pop_submitted/finance_review states) is fully operational.
 **Mode:** mvp
 **Depends on:** Phase 2
-**Requirements:** CONT-01, CONT-02, CONT-03, CONT-04
+**Requirements:** CONT-02, CONT-03 (simplified: local file storage, not R2; no PDF contract template)
+**Note:** CONT-01 (template upload/versioning) and CONT-04 (contract lifecycle stages) deferred to v2 per CONTEXT.md D-01/D-03.
 **Success Criteria** (what must be TRUE):
-  1. A compliance officer can upload a contract template, assign it to one or more engagement types, and the system versions templates so previous versions remain accessible.
-  2. For an approved engagement, the system generates a PDF contract with HCP profile fields, engagement scope, and the displayed FMV rate merged in — optional fields are explicitly marked as not applicable when absent.
-  3. A generated PDF is stored in cloud storage and cannot be overwritten through the application.
-  4. A compliance officer can track contract status through four stages: Draft → Sent → Executed → Expired.
-**Plans:** TBD
+  1. A Business user can attach a file (PDF, PNG, JPG, DOCX ≤ 5 MB) as Proof of Performance for an approved engagement; the file is stored and retrievable.
+  2. The stored PoP URL cannot be overwritten through the application once submitted.
+  3. A Legal user can review engagements routed to Legal and return them with feedback.
+**Plans:** 1 plan
+
+Plans:
+
+**Wave 1**
+- [x] 03-01-PLAN.md — PoP file upload: pop-upload + pop-file API routes, ActionPanel file upload UI, detail page link rendering
 
 ---
 
@@ -104,5 +109,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Auth + HCP Management | 4/4 | Complete | 2026-05-08 |
-| 2. FMV + Engagement | 0/5 | Not started | - |
-| 3. Contracts + Polish | 0/TBD | Not started | - |
+| 2. FMV + Engagement | 5/5 | Complete | 2026-05-12 |
+| 3. Contracts + Polish | 1/1 | In progress | - |
