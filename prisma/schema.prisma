@@ -279,7 +279,8 @@ model Engagement {
   engagementType      EngagementType
   status              EngagementStatus @default(draft)
   proposedDate        DateTime
-  compensationUsd     Decimal          @db.Decimal(10, 2)
+  agreedRateUsd       Decimal          @db.Decimal(10, 2)
+  noOfActivities      Int?
   description         String
   submittedByClerkId  String
   submittedByName     String
@@ -295,6 +296,7 @@ model Engagement {
 
   hcp                 Hcp              @relation(fields: [hcpId], references: [id])
   statusHistory       EngagementStatusHistory[]
+  invoice             Invoice?
 
   @@index([status])
   @@index([submittedByClerkId])
@@ -313,4 +315,19 @@ model EngagementStatusHistory {
   engagement     Engagement       @relation(fields: [engagementId], references: [id], onDelete: Cascade)
 
   @@index([engagementId])
+}
+
+model Invoice {
+  id                  String     @id @default(cuid())
+  engagementId        String     @unique
+  storageUrl          String
+  agreedRateUsd       Decimal    @db.Decimal(10, 2)
+  noOfActivities      Int?
+  totalUsd            Decimal    @db.Decimal(10, 2)
+  rateUnit            String
+  generatedByClerkId  String
+  generatedByName     String
+  generatedAt         DateTime   @default(now())
+
+  engagement          Engagement @relation(fields: [engagementId], references: [id])
 }
