@@ -66,8 +66,6 @@ export function ActionPanel({
   const isFinance = effectiveRoles.includes("finance");
   const isLegal = effectiveRoles.includes("legal");
   const isComplianceOrFinance = isCompliance || isFinance;
-  const isBusinessOnly =
-    effectiveRoles.includes("business") && !isCompliance && !isFinance;
 
   const rejectionCharCount = rejectionText.trim().length;
   const canReject = rejectionCharCount >= 10;
