@@ -114,7 +114,7 @@ export default async function ApprovalQueuePage() {
                   <EngagementStatusBadge status={engagement.status as EngagementStatusValue} />
                 </TableCell>
                 <TableCell>{format(new Date(engagement.proposedDate), "MMM d, yyyy")}</TableCell>
-                <TableCell>${parseFloat(engagement.compensationUsd.toString()).toFixed(2)}</TableCell>
+                <TableCell>${parseFloat(engagement.agreedRateUsd.toString()).toFixed(2)}</TableCell>
                 <TableCell>{engagement.submittedByName}</TableCell>
                 <TableCell>{formatDistanceToNow(new Date(engagement.updatedAt), { addSuffix: true })}</TableCell>
                 <TableCell>

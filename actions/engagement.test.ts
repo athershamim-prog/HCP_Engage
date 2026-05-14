@@ -68,7 +68,7 @@ const VALID_PARAMS = {
   hcpId: "hcp-abc",
   engagementType: "advisory_board",
   proposedDate: "2026-06-01",
-  compensationUsd: 350,
+  agreedRateUsd: 350,
   description: "A twenty-character minimum description for the engagement scope",
 };
 

@@ -28,7 +28,7 @@ export interface EngagementRow {
   engagementType: string;
   status: EngagementStatusValue;
   proposedDate: Date | string;
-  compensationUsd: number;
+  agreedRateUsd: number;
   submittedByName: string;
   updatedAt: Date | string;
   hcp: { fullName: string };
@@ -102,7 +102,7 @@ export function EngagementTable({
               {format(new Date(engagement.proposedDate), "MMM d, yyyy")}
             </TableCell>
             <TableCell className="text-[14px]">
-              ${Number(engagement.compensationUsd).toFixed(2)}
+              ${Number(engagement.agreedRateUsd).toFixed(2)}
             </TableCell>
             <TableCell className="text-[14px]">{engagement.submittedByName}</TableCell>
             <TableCell className="text-[14px] text-[hsl(215_16%_47%)]">

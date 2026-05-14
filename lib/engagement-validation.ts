@@ -35,7 +35,7 @@ export function validateEngagementFields(params: {
   hcpId: string;
   engagementType: string;
   proposedDate: string;
-  compensationUsd: number;
+  agreedRateUsd: number;
   description: string;
 }): { valid: boolean; error?: string } {
   if (!params.hcpId || params.hcpId.trim() === "") {
@@ -47,8 +47,8 @@ export function validateEngagementFields(params: {
   if (!params.proposedDate || params.proposedDate.trim() === "") {
     return { valid: false, error: "Proposed date is required." };
   }
-  if (params.compensationUsd < 0) {
-    return { valid: false, error: "Compensation cannot be negative." };
+  if (params.agreedRateUsd < 0) {
+    return { valid: false, error: "Agreed rate cannot be negative." };
   }
   if (params.description.trim().length < 20) {
     return { valid: false, error: "Description must be at least 20 characters." };

@@ -11,7 +11,7 @@ export interface CreateEngagementParams {
   hcpId: string;
   engagementType: string;
   proposedDate: string;
-  compensationUsd: number;
+  agreedRateUsd: number;
   description: string;
 }
 
@@ -45,7 +45,7 @@ export async function createEngagementAction(
           engagementType: params.engagementType as EngagementType,
           status: "draft",
           proposedDate: new Date(params.proposedDate),
-          compensationUsd: params.compensationUsd,
+          agreedRateUsd: params.agreedRateUsd,
           description: params.description,
           submittedByClerkId: user.id,
           submittedByName: user.fullName ?? "Unknown",

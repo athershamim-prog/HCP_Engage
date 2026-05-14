@@ -13,7 +13,7 @@ const VALID_ENGAGEMENT = {
   hcpId: "hcp-123",
   engagementType: "advisory_board",
   proposedDate: "2026-06-01",
-  compensationUsd: 350,
+  agreedRateUsd: 350,
   description: "A twenty-character minimum description for the engagement scope",
 };
 
@@ -31,10 +31,10 @@ describe("validateEngagementFields", () => {
     expect(result.valid).toBe(false);
     expect(result.error).toBe("Description must be at least 20 characters.");
   });
-  it("returns valid=false with error when compensationUsd is negative", () => {
-    const result = validateEngagementFields({ ...VALID_ENGAGEMENT, compensationUsd: -1 });
+  it("returns valid=false with error when agreedRateUsd is negative", () => {
+    const result = validateEngagementFields({ ...VALID_ENGAGEMENT, agreedRateUsd: -1 });
     expect(result.valid).toBe(false);
-    expect(result.error).toMatch(/compensation/i);
+    expect(result.error).toMatch(/agreed rate/i);
   });
   it("returns valid=false with error when engagementType is not one of the 5 valid values", () => {
     const result = validateEngagementFields({ ...VALID_ENGAGEMENT, engagementType: "invalid_type" });

@@ -102,7 +102,7 @@ export default async function EngagementsPage({
   // Serialize Decimal to number for client component
   const serializedEngagements = engagements.map((e) => ({
     ...e,
-    compensationUsd: parseFloat(e.compensationUsd.toString()),
+    agreedRateUsd: parseFloat(e.agreedRateUsd.toString()),
   }));
 
   const buildUrl = (overrides: Record<string, string>) => {

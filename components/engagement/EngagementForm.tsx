@@ -45,7 +45,7 @@ export function EngagementForm() {
   const [selectedHcp, setSelectedHcp] = useState<SelectedHcp | null>(null);
   const [engagementType, setEngagementType] = useState("");
   const [proposedDate, setProposedDate] = useState("");
-  const [compensationUsd, setCompensationUsd] = useState("");
+  const [agreedRateUsd, setAgreedRateUsd] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
@@ -75,7 +75,7 @@ export function EngagementForm() {
         hcpId: selectedHcp.id,
         engagementType,
         proposedDate,
-        compensationUsd: parseFloat(compensationUsd) || 0,
+        agreedRateUsd: parseFloat(agreedRateUsd) || 0,
         description,
       });
       if (!result.success) {
@@ -95,7 +95,7 @@ export function EngagementForm() {
         hcpId: selectedHcp?.id ?? "",
         engagementType,
         proposedDate,
-        compensationUsd: parseFloat(compensationUsd) || 0,
+        agreedRateUsd: parseFloat(agreedRateUsd) || 0,
         description,
       });
       if (!createResult.success) {
@@ -201,9 +201,9 @@ export function EngagementForm() {
               type="number"
               min="0"
               step="0.01"
-              value={compensationUsd}
+              value={agreedRateUsd}
               onChange={(e) => {
-                setCompensationUsd(e.target.value);
+                setAgreedRateUsd(e.target.value);
                 setTouched(true);
               }}
               disabled={isPending}

@@ -107,7 +107,7 @@ export default async function EngagementDetailPage({
   }).catch(() => null);
 
   // Serialize Decimal for display
-  const compensationDisplay = parseFloat(engagement.compensationUsd.toString()).toFixed(2);
+  const agreedRateDisplay = parseFloat(engagement.agreedRateUsd.toString()).toFixed(2);
   const proposedDateDisplay = format(new Date(engagement.proposedDate), "MMM d, yyyy");
   const engagementTypeLabel = ENGAGEMENT_TYPE_LABELS[engagement.engagementType] ?? engagement.engagementType;
 
@@ -163,7 +163,7 @@ export default async function EngagementDetailPage({
               </div>
               <div>
                 <dt className="text-[12px] font-semibold text-[hsl(215_16%_47%)]">Compensation</dt>
-                <dd className="mt-0.5">${compensationDisplay}</dd>
+                <dd className="mt-0.5">${agreedRateDisplay}</dd>
               </div>
               <div className="col-span-2">
                 <dt className="text-[12px] font-semibold text-[hsl(215_16%_47%)]">
