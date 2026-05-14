@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In Progress
-last_updated: "2026-05-14T00:00:00Z"
-last_activity: 2026-05-14 — Phase 4 planned; 3 plans in 3 waves; ready to execute
+last_updated: "2026-05-14T13:53:28Z"
+last_activity: 2026-05-14 — Phase 4 Plan 01 complete; schema migrated, packages installed, Wave 0 stubs written
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 13
-  completed_plans: 10
-  percent: 75
+  completed_plans: 11
+  percent: 78
 ---
 
 # Project State: HCP Engage
@@ -24,12 +24,12 @@ See: .planning/PROJECT.md (updated 2026-05-07)
 
 ## Current Position
 
-Phase: 4 of 4 (Ready to Execute)
-Plan: 0 of 3 in current phase
-Status: Phase 4 planned — ready to execute
-Last activity: 2026-05-14 — Phase 4 planned; 3 plans in 3 waves; ready to execute
+Phase: 4 of 4 (In Progress)
+Plan: 1 of 3 in current phase (04-01 complete)
+Status: Phase 4 executing — Plan 01 complete, Plans 02-03 remaining
+Last activity: 2026-05-14 — Phase 4 Plan 01 complete; schema migrated, packages installed, Wave 0 stubs written
 
-Progress: [███████░░░] 75%
+Progress: [████████░░] 78%
 
 ## Performance Metrics
 
@@ -46,10 +46,11 @@ Progress: [███████░░░] 75%
 | 1 | 4 | — | — |
 | 2 | 5 | — | — |
 | 3 | 1 | — | — |
+| 4 | 1/3 | 7min | 7min |
 
 **Recent Trend:**
 
-- Last 5 plans: 02-03, 02-04, 02-05, Legal role expansion, 03-01 pop-file-upload
+- Last 5 plans: 02-04, 02-05, Legal role expansion, 03-01 pop-file-upload, 04-01 schema-migration
 - Trend: —
 
 *Updated after each plan completion*
@@ -61,7 +62,7 @@ Progress: [███████░░░] 75%
 | 1 | Auth + HCP Management | Complete (2026-05-08) |
 | 2 | FMV + Engagement | Complete (2026-05-12) |
 | 3 | Contracts + Polish | Complete (2026-05-14) |
-| 4 | Invoice Generation | Ready to Execute |
+| 4 | Invoice Generation | In Progress (1/3 plans) |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - Phase 3: Contracts deferred to v2 (CONT-01 template upload, CONT-04 lifecycle stages, DocuSign) — Phase 3 delivered PoP file upload + Legal role workflow instead
 - Phase 3: Local filesystem storage (uploads/pop/) used for v1 PoP files; R2/S3 migration deferred to v2 (IN-01)
 - Phase 3: popDocumentUrl validated server-side — internal uploads must match UUID pattern, external refs must be http/https only
+- Phase 4/Plan 01: Used prisma db execute (not migrate dev) due to no migration history — project used db push workflow; handwrote RENAME COLUMN SQL to preserve existing compensation data
+- Phase 4/Plan 01: agreedRateUsd replaces compensationUsd throughout — Engagement model + 10 source files; Invoice model created with unique engagementId for idempotency
 
 ### Pending Todos
 
@@ -97,6 +100,6 @@ None — milestone complete.
 
 ## Session Continuity
 
-Last session: 2026-05-14T00:00:00Z
-Stopped at: Milestone v1.0 complete
+Last session: 2026-05-14T13:53:28Z
+Stopped at: Completed 04-01-PLAN.md — schema migrated, packages installed, Wave 0 stubs written
 Resume file: None

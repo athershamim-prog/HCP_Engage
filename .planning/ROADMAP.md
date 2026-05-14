@@ -117,7 +117,7 @@ Plans:
 Plans:
 
 **Wave 1** *(BLOCKING — Waves 2 and 3 depend on schema migration completing)*
-- [ ] 04-01-PLAN.md — Schema + Foundation: Prisma rename migration (compensationUsd→agreedRateUsd), noOfActivities field, Invoice model; install @react-pdf/renderer@4.5.1 and @aws-sdk/client-s3@3.1046.0; update next.config.ts and .env.example; rename field across all 10 affected files; Wave 0 test stubs
+- [x] 04-01-PLAN.md — Schema + Foundation: Prisma rename migration (compensationUsd→agreedRateUsd), noOfActivities field, Invoice model; install @react-pdf/renderer@4.5.1 and @aws-sdk/client-s3@3.1046.0; update next.config.ts and .env.example; rename field across all 10 affected files; Wave 0 test stubs
 
 **Wave 2** *(blocked on Wave 1 — Plans run sequentially due to shared lib/ files)*
 - [ ] 04-02-PLAN.md — Invoice Logic + Route Handler: lib/r2.ts (S3Client for R2), lib/invoice-calc.ts (pure calculateInvoiceTotal), components/pdf/InvoiceDocument.tsx (react-pdf Document), app/api/engagements/[id]/invoice/route.ts (POST: auth + role gate + PDF generate + R2 upload + DB write)
@@ -142,4 +142,4 @@ Plans:
 | 1. Auth + HCP Management | 4/4 | Complete | 2026-05-08 |
 | 2. FMV + Engagement | 5/5 | Complete | 2026-05-12 |
 | 3. Contracts + Polish | 1/1 | Complete | 2026-05-14 |
-| 4. Invoice Generation | 0/3 | Planning | — |
+| 4. Invoice Generation | 1/3 | In Progress | — |
