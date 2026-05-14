@@ -397,6 +397,20 @@ export async function attachPopAction(
     return { success: false, error: "Proof of Performance reference is required." };
   }
 
+  // Validate URL — only internal UUID upload paths or http/https external references are permitted
+  const INTERNAL_POP_RE = /^\/api\/engagements\/pop-file\/[0-9a-f-]{36}\.[a-z]{2,4}$/;
+  const trimmed = popDocumentUrl.trim();
+  if (!INTERNAL_POP_RE.test(trimmed)) {
+    try {
+      const u = new URL(trimmed);
+      if (u.protocol !== "https:" && u.protocol !== "http:") {
+        return { success: false, error: "Only https/http document references are permitted." };
+      }
+    } catch {
+      return { success: false, error: "Invalid document reference. Use a valid URL or upload a file." };
+    }
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
       const updated = await tx.engagement.updateMany({
