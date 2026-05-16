@@ -49,12 +49,10 @@ export function EngagementForm() {
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
-  const [rateUnit, setRateUnit] = useState<string | null>(null);
   const [noOfActivities, setNoOfActivities] = useState("");
 
   const today = new Date().toISOString().split("T")[0];
   const isPastDate = proposedDate && proposedDate < today;
-  const showNoOfActivities = rateUnit === "per_hour" || rateUnit === "per_day";
   const descriptionLength = description.trim().length;
 
   function handleCancel() {
@@ -79,7 +77,7 @@ export function EngagementForm() {
         engagementType,
         proposedDate,
         agreedRateUsd: parseFloat(agreedRateUsd) || 0,
-        noOfActivities: showNoOfActivities ? parseInt(noOfActivities, 10) || null : null,
+        noOfActivities: parseInt(noOfActivities, 10) || null,
         description,
       });
       if (!result.success) {
@@ -100,7 +98,7 @@ export function EngagementForm() {
         engagementType,
         proposedDate,
         agreedRateUsd: parseFloat(agreedRateUsd) || 0,
-        noOfActivities: showNoOfActivities ? parseInt(noOfActivities, 10) || null : null,
+        noOfActivities: parseInt(noOfActivities, 10) || null,
         description,
       });
       if (!createResult.success) {
@@ -294,26 +292,23 @@ export function EngagementForm() {
         <FmvRatePanel
           hcpId={selectedHcp?.id ?? null}
           engagementType={engagementType || null}
-          onRateLoaded={(unit) => setRateUnit(unit)}
         />
-        {showNoOfActivities && (
-          <div>
-            <label className="block text-[12px] font-semibold text-[hsl(220_13%_18%)] mb-1">
-              No of Activities <span className="text-[hsl(0_72%_51%)]">*</span>
-            </label>
-            <Input
-              type="number"
-              min="1"
-              step="1"
-              value={noOfActivities}
-              onChange={(e) => { setNoOfActivities(e.target.value); setTouched(true); }}
-              disabled={isPending}
-              className="h-11"
-              placeholder="e.g., 4"
-              aria-label="Number of activities"
-            />
-          </div>
-        )}
+        <div>
+          <label className="block text-[12px] font-semibold text-[hsl(220_13%_18%)] mb-1">
+            No of Activities
+          </label>
+          <Input
+            type="number"
+            min="1"
+            step="1"
+            value={noOfActivities}
+            onChange={(e) => { setNoOfActivities(e.target.value); setTouched(true); }}
+            disabled={isPending}
+            className="h-11"
+            placeholder="e.g., 4"
+            aria-label="Number of activities"
+          />
+        </div>
       </div>
     </div>
   );
