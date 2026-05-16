@@ -193,6 +193,24 @@ export function EngagementForm() {
           )}
         </div>
 
+        {/* No of Activities */}
+        <div>
+          <label className="block text-[12px] font-semibold text-[hsl(220_13%_18%)] mb-1">
+            No of Activities
+          </label>
+          <Input
+            type="number"
+            min="1"
+            step="1"
+            value={noOfActivities}
+            onChange={(e) => { setNoOfActivities(e.target.value); setTouched(true); }}
+            disabled={isPending}
+            className="h-11"
+            placeholder="e.g., 4"
+            aria-label="Number of activities"
+          />
+        </div>
+
         {/* Agreed Rate */}
         <div>
           <label className="block text-[12px] font-semibold text-[hsl(220_13%_18%)] mb-1">
@@ -214,27 +232,6 @@ export function EngagementForm() {
               placeholder="0.00"
               aria-label="Agreed rate in USD"
             />
-          </div>
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="block text-[12px] font-semibold text-[hsl(220_13%_18%)] mb-1">
-            Description / Scope of Work <span className="text-[hsl(0_72%_51%)]">*</span>
-          </label>
-          <Textarea
-            value={description}
-            onChange={(e) => {
-              setDescription(e.target.value);
-              setTouched(true);
-            }}
-            disabled={isPending}
-            rows={4}
-            placeholder="Describe the engagement scope and purpose..."
-            aria-label="Description or scope of work"
-          />
-          <div className="mt-1 text-[12px] text-[hsl(215_16%_47%)]">
-            {descriptionLength}/20 minimum characters
           </div>
         </div>
 
@@ -287,7 +284,7 @@ export function EngagementForm() {
         </div>
       </div>
 
-      {/* Right column: FMV rate reference panel + conditional noOfActivities */}
+      {/* Right column: FMV rate reference panel + description */}
       <div className="pt-6 space-y-5">
         <FmvRatePanel
           hcpId={selectedHcp?.id ?? null}
@@ -295,19 +292,22 @@ export function EngagementForm() {
         />
         <div>
           <label className="block text-[12px] font-semibold text-[hsl(220_13%_18%)] mb-1">
-            No of Activities
+            Description / Scope of Work <span className="text-[hsl(0_72%_51%)]">*</span>
           </label>
-          <Input
-            type="number"
-            min="1"
-            step="1"
-            value={noOfActivities}
-            onChange={(e) => { setNoOfActivities(e.target.value); setTouched(true); }}
+          <Textarea
+            value={description}
+            onChange={(e) => {
+              setDescription(e.target.value);
+              setTouched(true);
+            }}
             disabled={isPending}
-            className="h-11"
-            placeholder="e.g., 4"
-            aria-label="Number of activities"
+            rows={4}
+            placeholder="Describe the engagement scope and purpose..."
+            aria-label="Description or scope of work"
           />
+          <div className="mt-1 text-[12px] text-[hsl(215_16%_47%)]">
+            {descriptionLength}/20 minimum characters
+          </div>
         </div>
       </div>
     </div>
