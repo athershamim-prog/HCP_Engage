@@ -89,6 +89,8 @@ async function main() {
     { code: "207L00000X", grouping: "Allopathic & Osteopathic Physicians", classification: "Anesthesiology", specialization: null, displayName: "Anesthesiology" },
     { code: "207N00000X", grouping: "Allopathic & Osteopathic Physicians", classification: "Dermatology", specialization: null, displayName: "Dermatology" },
     { code: "207P00000X", grouping: "Allopathic & Osteopathic Physicians", classification: "Emergency Medicine", specialization: null, displayName: "Emergency Medicine" },
+    { code: "208000000X", grouping: "Allopathic & Osteopathic Physicians", classification: "Pediatrics", specialization: null, displayName: "Pediatrics" },
+    { code: "208M00000X", grouping: "Allopathic & Osteopathic Physicians", classification: "Hospitalist", specialization: null, displayName: "Hospitalist" },
     { code: "208D00000X", grouping: "Allopathic & Osteopathic Physicians", classification: "General Practice", specialization: null, displayName: "General Practice" },
     { code: "363L00000X", grouping: "Physician Assistants & Advanced Practice Nursing Providers", classification: "Physician Assistant", specialization: null, displayName: "Physician Assistant" },
     { code: "363A00000X", grouping: "Physician Assistants & Advanced Practice Nursing Providers", classification: "Physician Assistant", specialization: "Medical", displayName: "Physician Assistant — Medical" },
