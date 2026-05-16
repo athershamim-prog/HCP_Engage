@@ -49,9 +49,12 @@ export function EngagementForm() {
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const [rateUnit, setRateUnit] = useState<string | null>(null);
+  const [noOfActivities, setNoOfActivities] = useState("");
 
   const today = new Date().toISOString().split("T")[0];
   const isPastDate = proposedDate && proposedDate < today;
+  const showNoOfActivities = rateUnit === "per_hour" || rateUnit === "per_day";
   const descriptionLength = description.trim().length;
 
   function handleCancel() {
@@ -76,6 +79,7 @@ export function EngagementForm() {
         engagementType,
         proposedDate,
         agreedRateUsd: parseFloat(agreedRateUsd) || 0,
+        noOfActivities: showNoOfActivities ? parseInt(noOfActivities, 10) || null : null,
         description,
       });
       if (!result.success) {
@@ -96,6 +100,7 @@ export function EngagementForm() {
         engagementType,
         proposedDate,
         agreedRateUsd: parseFloat(agreedRateUsd) || 0,
+        noOfActivities: showNoOfActivities ? parseInt(noOfActivities, 10) || null : null,
         description,
       });
       if (!createResult.success) {
@@ -190,10 +195,10 @@ export function EngagementForm() {
           )}
         </div>
 
-        {/* Compensation */}
+        {/* Agreed Rate */}
         <div>
           <label className="block text-[12px] font-semibold text-[hsl(220_13%_18%)] mb-1">
-            Compensation (USD) <span className="text-[hsl(0_72%_51%)]">*</span>
+            Agreed Rate (USD) <span className="text-[hsl(0_72%_51%)]">*</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[hsl(215_16%_47%)]">$</span>
@@ -209,7 +214,7 @@ export function EngagementForm() {
               disabled={isPending}
               className="h-11 pl-7"
               placeholder="0.00"
-              aria-label="Compensation in USD"
+              aria-label="Agreed rate in USD"
             />
           </div>
         </div>
@@ -284,12 +289,31 @@ export function EngagementForm() {
         </div>
       </div>
 
-      {/* Right column: FMV rate reference panel */}
-      <div className="pt-6">
+      {/* Right column: FMV rate reference panel + conditional noOfActivities */}
+      <div className="pt-6 space-y-5">
         <FmvRatePanel
           hcpId={selectedHcp?.id ?? null}
           engagementType={engagementType || null}
+          onRateLoaded={(unit) => setRateUnit(unit)}
         />
+        {showNoOfActivities && (
+          <div>
+            <label className="block text-[12px] font-semibold text-[hsl(220_13%_18%)] mb-1">
+              No of Activities <span className="text-[hsl(0_72%_51%)]">*</span>
+            </label>
+            <Input
+              type="number"
+              min="1"
+              step="1"
+              value={noOfActivities}
+              onChange={(e) => { setNoOfActivities(e.target.value); setTouched(true); }}
+              disabled={isPending}
+              className="h-11"
+              placeholder="e.g., 4"
+              aria-label="Number of activities"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

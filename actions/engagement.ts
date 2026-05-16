@@ -12,6 +12,7 @@ export interface CreateEngagementParams {
   engagementType: string;
   proposedDate: string;
   agreedRateUsd: number;
+  noOfActivities?: number | null;
   description: string;
 }
 
@@ -46,6 +47,7 @@ export async function createEngagementAction(
           status: "draft",
           proposedDate: new Date(params.proposedDate),
           agreedRateUsd: params.agreedRateUsd,
+          noOfActivities: params.noOfActivities ?? null,
           description: params.description,
           submittedByClerkId: user.id,
           submittedByName: user.fullName ?? "Unknown",

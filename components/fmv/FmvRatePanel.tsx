@@ -33,9 +33,10 @@ type PanelState = "initial" | "loading" | "loaded" | "no_rate" | "no_card";
 interface FmvRatePanelProps {
   hcpId: string | null;
   engagementType: string | null;
+  onRateLoaded?: (rateUnit: string | null) => void;
 }
 
-export function FmvRatePanel({ hcpId, engagementType }: FmvRatePanelProps) {
+export function FmvRatePanel({ hcpId, engagementType, onRateLoaded }: FmvRatePanelProps) {
   const [panelState, setPanelState] = useState<PanelState>("initial");
   const [rate, setRate] = useState<RateData | null>(null);
 
@@ -43,6 +44,7 @@ export function FmvRatePanel({ hcpId, engagementType }: FmvRatePanelProps) {
     if (!hcpId || !engagementType) {
       setPanelState("initial");
       setRate(null);
+      onRateLoaded?.(null);
       return;
     }
 
@@ -60,6 +62,7 @@ export function FmvRatePanel({ hcpId, engagementType }: FmvRatePanelProps) {
         if (!res.ok) {
           // 404 or error could mean no active card
           setPanelState("no_card");
+          onRateLoaded?.(null);
           return;
         }
 
@@ -69,13 +72,19 @@ export function FmvRatePanel({ hcpId, engagementType }: FmvRatePanelProps) {
         if (data.rate) {
           setRate(data.rate);
           setPanelState("loaded");
+          onRateLoaded?.(data.rate.rateUnit);
         } else if (data.noActiveCard) {
           setPanelState("no_card");
+          onRateLoaded?.(null);
         } else {
           setPanelState("no_rate");
+          onRateLoaded?.(null);
         }
       } catch {
-        if (!cancelled) setPanelState("no_card");
+        if (!cancelled) {
+          setPanelState("no_card");
+          onRateLoaded?.(null);
+        }
       }
     };
 
