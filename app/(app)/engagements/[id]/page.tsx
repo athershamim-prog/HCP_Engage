@@ -88,6 +88,7 @@ export default async function EngagementDetailPage({
         },
       },
       statusHistory: { orderBy: { createdAt: "desc" } },
+      invoice: { select: { storageUrl: true } },
     },
   });
   if (!engagement) notFound();
@@ -255,6 +256,25 @@ export default async function EngagementDetailPage({
           </Card>
         )}
 
+        {/* Invoice download card — shown once invoice is generated */}
+        {engagement.invoice && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[20px]">Invoice</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <a
+                href={engagement.invoice.storageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[14px] text-[hsl(221_83%_53%)] hover:underline"
+              >
+                Download Invoice ↗
+              </a>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Status History card */}
         <Card>
           <CardHeader>
@@ -313,6 +333,7 @@ export default async function EngagementDetailPage({
           effectiveRoles={effectiveRoles}
           rejectionReason={engagement.rejectionReason}
           popDocumentUrl={engagement.popDocumentUrl}
+          invoiceStorageUrl={engagement.invoice?.storageUrl ?? null}
         />
       </div>
     </div>

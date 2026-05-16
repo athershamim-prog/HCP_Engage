@@ -40,6 +40,7 @@ interface ActionPanelProps {
   effectiveRoles: string[];
   rejectionReason?: string | null;
   popDocumentUrl?: string | null;
+  invoiceStorageUrl?: string | null;
 }
 
 export function ActionPanel({
@@ -50,6 +51,7 @@ export function ActionPanel({
   effectiveRoles,
   rejectionReason,
   popDocumentUrl,
+  invoiceStorageUrl,
 }: ActionPanelProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -92,6 +94,26 @@ export function ActionPanel({
       setUploadStatus("error");
       setError("Upload failed. Please try again.");
     }
+  }
+
+  async function handleGenerateInvoice() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        const res = await fetch(`/api/engagements/${engagementId}/invoice`, {
+          method: "POST",
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error ?? "Invoice generation failed.");
+        } else {
+          toast.success("Invoice generated successfully.");
+          router.refresh();
+        }
+      } catch {
+        setError("Invoice generation failed. Please try again.");
+      }
+    });
   }
 
   function wrap(fn: () => Promise<{ success: boolean; error?: string }>, successMsg: string, redirect?: string) {
@@ -436,6 +458,66 @@ export function ActionPanel({
   }
 
   // ── Completed ──────────────────────────────────────────────────────────────
+  if (status === "completed") {
+    // All roles: show Download Invoice once invoice exists
+    if (invoiceStorageUrl) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[20px]">Invoice</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <a
+              href={invoiceStorageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full"
+            >
+              <Button variant="outline" className="w-full h-11">
+                Download Invoice
+              </Button>
+            </a>
+            {error && (
+              <p className="text-[12px] text-[hsl(0_72%_51%)]">{error}</p>
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
+    // Compliance only: show Generate Invoice when no invoice and PoP is attached
+    if (isCompliance && popDocumentUrl) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[20px]">Generate Invoice</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button
+              onClick={handleGenerateInvoice}
+              disabled={isPending}
+              className="w-full h-11 bg-[hsl(221_83%_53%)] hover:bg-[hsl(221_83%_47%)] text-white"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Generating...
+                </>
+              ) : (
+                "Generate Invoice"
+              )}
+            </Button>
+            {error && (
+              <p className="text-[12px] text-[hsl(0_72%_51%)]">{error}</p>
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
+    // Fallback: completed but no PoP or non-compliance role without invoice
+    return <ReadOnlyCard message="Completed" />;
+  }
+
+  // Catch-all fallback
   return <ReadOnlyCard message="Completed" />;
 }
 
