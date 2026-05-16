@@ -1,4 +1,7 @@
 /**
+ * @jest-environment jsdom
+ */
+/**
  * Tests for components/pdf/InvoiceDocument.tsx
  * Requirements: CONT-02
  * Wave 0 — these tests FAIL until InvoiceDocument.tsx and @react-pdf/renderer are in place.
