@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { renderToBuffer } from "@react-pdf/renderer";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { prisma } from "@/lib/prisma";
-import { r2 } from "@/lib/r2";
 import { getEffectiveRoles, assertRole } from "@/lib/auth";
-import { calculateInvoiceTotal } from "@/lib/invoice-calc";
-import { InvoiceDocument } from "@/components/pdf/InvoiceDocument";
-import React from "react";
+import { buildInvoicePdf } from "@/lib/generate-invoice";
 
 export async function POST(
   _request: NextRequest,
@@ -15,14 +10,12 @@ export async function POST(
 ) {
   const { id: engagementId } = await params;
 
-  // Auth — verify user is authenticated
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // Role gate — compliance only (D-08)
     const user = await currentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -39,7 +32,6 @@ export async function POST(
 
     assertRole(roles, ["compliance"]);
 
-    // Load engagement with HCP data
     const engagement = await prisma.engagement.findUnique({
       where: { id: engagementId },
       include: {
@@ -59,7 +51,6 @@ export async function POST(
       return NextResponse.json({ error: "Engagement not found" }, { status: 404 });
     }
 
-    // Gate: engagement must be completed (D-08)
     if (engagement.status !== "completed") {
       return NextResponse.json(
         { error: "Invoice can only be generated for completed engagements" },
@@ -67,7 +58,6 @@ export async function POST(
       );
     }
 
-    // Gate: PoP must be attached (D-08)
     if (!engagement.popDocumentUrl) {
       return NextResponse.json(
         { error: "Proof of Performance must be attached before generating invoice" },
@@ -75,7 +65,6 @@ export async function POST(
       );
     }
 
-    // Idempotency: invoice already exists → 409
     if (engagement.invoice) {
       return NextResponse.json(
         { error: "Invoice already exists for this engagement" },
@@ -83,86 +72,31 @@ export async function POST(
       );
     }
 
-    // Look up FMV rate for rateUnit (best-effort — use per_hour if no rate on file, per D-07)
-    const fmvRate = await prisma.fmvRate.findFirst({
-      where: {
-        rateCard: { status: "active" },
-        nuccCode: engagement.hcp.nuccCode ?? undefined,
-        engagementType: engagement.engagementType,
-      },
-      orderBy: { rateCard: { effectiveFrom: "desc" } },
-    });
+    const payload = await buildInvoicePdf(engagement);
 
-    // FmvRate.rateUnit is the RateUnit enum; convert to string
-    const rateUnit = fmvRate?.rateUnit ?? "per_hour";
-
-    // Calculate total (D-06)
-    const agreedRateNum = parseFloat(engagement.agreedRateUsd.toString());
-    const { totalUsd, noOfActivitiesApplied } = calculateInvoiceTotal({
-      agreedRateUsd: agreedRateNum,
-      rateUnit: rateUnit as "per_hour" | "per_day" | "flat_fee" | "per_event",
-      noOfActivities: engagement.noOfActivities ?? null,
-    });
-
-    // Generate PDF buffer (D-02, D-11)
-    // Cast: InvoiceDocument renders a <Document> root; cast required because TypeScript
-    // cannot infer through the wrapper that the JSX root matches ReactPDF.DocumentProps.
-    const invoiceElement = React.createElement(InvoiceDocument, {
-      hcpFullName: engagement.hcp.fullName,
-      hcpNpi: engagement.hcp.npi,
-      hcpSpecialty: engagement.hcp.nuccDisplayName,
-      engagementType: engagement.engagementType,
-      proposedDate: engagement.proposedDate.toISOString().split("T")[0],
-      agreedRateUsd: agreedRateNum,
-      rateUnit: rateUnit,
-      noOfActivities: engagement.noOfActivities ?? null,
-      totalUsd,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }) as any;
-    const buffer = await renderToBuffer(invoiceElement);
-
-    // Upload to R2 (D-12, D-13)
-    const key = `invoices/${engagementId}/${Date.now()}.pdf`;
-    await r2.send(
-      new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME!,
-        Key: key,
-        Body: buffer,
-        ContentType: "application/pdf",
-      })
-    );
-    const storageUrl = `${process.env.R2_PUBLIC_URL}/${key}`;
-
-    // Create Invoice record in a transaction (D-14)
-    // Unique constraint on engagementId is the final race-condition guard
     await prisma.$transaction(async (tx) => {
       await tx.invoice.create({
         data: {
           engagementId,
-          storageUrl,
-          agreedRateUsd: agreedRateNum,
-          noOfActivities:
-            noOfActivitiesApplied === 1 && !engagement.noOfActivities
-              ? null
-              : noOfActivitiesApplied,
-          totalUsd,
-          rateUnit: rateUnit,
+          storageUrl: payload.storageUrl,
+          agreedRateUsd: payload.agreedRateUsd,
+          noOfActivities: payload.noOfActivities,
+          totalUsd: payload.totalUsd,
+          rateUnit: payload.rateUnit,
           generatedByClerkId: user.id,
           generatedByName: user.fullName ?? "Unknown",
         },
       });
     });
 
-    return NextResponse.json({ storageUrl });
+    return NextResponse.json({ storageUrl: payload.storageUrl });
   } catch (error) {
-    // Prisma unique constraint violation (P2002) — double-generate race condition
     if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json(
         { error: "Invoice already exists for this engagement" },
         { status: 409 }
       );
     }
-    // assertRole throws "Access denied. Required roles: ..."
     if (error instanceof Error && error.message.startsWith("Access denied")) {
       return NextResponse.json(
         { error: "Forbidden: only Compliance can generate invoices" },

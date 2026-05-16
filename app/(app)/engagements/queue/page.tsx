@@ -48,15 +48,20 @@ export default async function ApprovalQueuePage() {
   const isFinanceOnly =
     effectiveRoles.includes("finance") && !effectiveRoles.includes("compliance");
 
-  // Finance sees only finance_review; Compliance sees submitted, compliance_review, pop_submitted
-  const statusFilter = isFinanceOnly
-    ? (["finance_review"] as EngagementStatusValue[])
-    : QUEUE_STATUSES;
-
+  // Finance sees finance_review (manual complete path) + completed with invoice (auto path)
+  // Compliance sees submitted, compliance_review, pop_submitted
   const engagements = await prisma.engagement.findMany({
-    where: { status: { in: statusFilter } },
+    where: isFinanceOnly
+      ? {
+          OR: [
+            { status: "finance_review" },
+            { status: "completed", invoice: { isNot: null } },
+          ],
+        }
+      : { status: { in: QUEUE_STATUSES } },
     include: {
       hcp: { select: { fullName: true } },
+      invoice: { select: { storageUrl: true } },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -99,7 +104,7 @@ export default async function ApprovalQueuePage() {
               <TableHead style={{ width: "16%" }}>Engagement Type</TableHead>
               <TableHead style={{ width: "12%" }}>Status</TableHead>
               <TableHead style={{ width: "11%" }}>Proposed Date</TableHead>
-              <TableHead style={{ width: "10%" }}>Compensation</TableHead>
+              <TableHead style={{ width: "10%" }}>Agreed Rate</TableHead>
               <TableHead style={{ width: "13%" }}>Submitted By</TableHead>
               <TableHead style={{ width: "12%" }}>Waiting Since</TableHead>
               <TableHead style={{ width: "8%" }}>Actions</TableHead>
@@ -118,12 +123,23 @@ export default async function ApprovalQueuePage() {
                 <TableCell>{engagement.submittedByName}</TableCell>
                 <TableCell>{formatDistanceToNow(new Date(engagement.updatedAt), { addSuffix: true })}</TableCell>
                 <TableCell>
-                  <Link
-                    href={`/engagements/${engagement.id}`}
-                    className="text-[hsl(221_83%_53%)] hover:underline text-[14px] font-medium"
-                  >
-                    Review
-                  </Link>
+                  {isFinanceOnly && engagement.status === "completed" && engagement.invoice?.storageUrl ? (
+                    <a
+                      href={engagement.invoice.storageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[hsl(221_83%_53%)] hover:underline text-[14px] font-medium"
+                    >
+                      Download ↗
+                    </a>
+                  ) : (
+                    <Link
+                      href={`/engagements/${engagement.id}`}
+                      className="text-[hsl(221_83%_53%)] hover:underline text-[14px] font-medium"
+                    >
+                      Review
+                    </Link>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

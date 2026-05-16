@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getEffectiveRoles, assertRole } from "@/lib/auth";
 import { validateEngagementFields, validateRejectionReason, validateStateTransition } from "@/lib/engagement-validation";
+import { buildInvoicePdf } from "@/lib/generate-invoice";
 import type { EngagementType, EngagementStatus } from "@prisma/client";
 
 export interface CreateEngagementParams {
@@ -320,8 +321,9 @@ export async function legalReturnAction(
   }
 }
 
-// Compliance sends the engagement directly to Finance (skips PoP step).
-// Valid from: submitted, compliance_review, pop_submitted
+// Compliance sends the engagement to Finance.
+// From pop_submitted: auto-completes + auto-generates invoice (finance receives completed record with invoice).
+// From submitted/compliance_review: transitions to finance_review for manual completion by Finance.
 export async function sendToFinanceAction(
   engagementId: string
 ): Promise<{ success: boolean; error?: string }> {
@@ -339,11 +341,83 @@ export async function sendToFinanceAction(
   }
 
   try {
+    const engagement = await prisma.engagement.findUnique({
+      where: { id: engagementId },
+      include: {
+        hcp: { select: { fullName: true, npi: true, nuccCode: true, nuccDisplayName: true } },
+        invoice: { select: { id: true } },
+      },
+    });
+
+    if (!engagement) return { success: false, error: "Engagement not found" };
+
+    const validStatuses = ["submitted", "compliance_review", "pop_submitted"];
+    if (!validStatuses.includes(engagement.status)) {
+      return { success: false, error: "Engagement is not in a state that can be sent to Finance" };
+    }
+
+    // pop_submitted path: auto-complete + auto-generate invoice
+    if (engagement.status === "pop_submitted") {
+      if (!engagement.popDocumentUrl) {
+        return { success: false, error: "Proof of Performance must be attached before sending to Finance" };
+      }
+      if (engagement.invoice) {
+        return { success: false, error: "Invoice already exists for this engagement" };
+      }
+
+      // Build PDF and upload to R2 before transaction (async I/O cannot run inside Prisma tx)
+      const payload = await buildInvoicePdf(engagement);
+
+      await prisma.$transaction(async (tx) => {
+        // Atomic status check — guards against concurrent state changes between load and tx
+        const updated = await tx.engagement.updateMany({
+          where: { id: engagementId, status: "pop_submitted" },
+          data: {
+            status: "completed",
+            reviewedByClerkId: user.id,
+            reviewedByName: user.fullName ?? "Unknown",
+            reviewedAt: new Date(),
+          },
+        });
+        if (updated.count === 0) {
+          throw new Error("Engagement status changed — please refresh and try again");
+        }
+
+        await tx.invoice.create({
+          data: {
+            engagementId,
+            storageUrl: payload.storageUrl,
+            agreedRateUsd: payload.agreedRateUsd,
+            noOfActivities: payload.noOfActivities,
+            totalUsd: payload.totalUsd,
+            rateUnit: payload.rateUnit,
+            generatedByClerkId: user.id,
+            generatedByName: user.fullName ?? "Unknown",
+          },
+        });
+
+        await tx.engagementStatusHistory.create({
+          data: {
+            engagementId,
+            status: "completed",
+            actorClerkId: user.id,
+            actorName: user.fullName ?? "Unknown",
+          },
+        });
+      });
+
+      revalidatePath(`/engagements/${engagementId}`);
+      revalidatePath("/engagements");
+      revalidatePath("/engagements/queue");
+      return { success: true };
+    }
+
+    // submitted/compliance_review path: transition to finance_review (manual completion by Finance)
     await prisma.$transaction(async (tx) => {
       const updated = await tx.engagement.updateMany({
         where: {
           id: engagementId,
-          status: { in: ["submitted", "compliance_review", "pop_submitted"] },
+          status: { in: ["submitted", "compliance_review"] },
         },
         data: {
           status: "finance_review",
@@ -371,6 +445,9 @@ export async function sendToFinanceAction(
     revalidatePath("/engagements/queue");
     return { success: true };
   } catch (error) {
+    if ((error as { code?: string }).code === "P2002") {
+      return { success: false, error: "Invoice already exists for this engagement" };
+    }
     console.error("sendToFinanceAction failed:", error);
     return { success: false, error: "Action failed. Refresh the page and try again." };
   }

@@ -5,6 +5,16 @@
 
 import type { PrismaClient } from "@prisma/client";
 
+jest.mock("@/lib/generate-invoice", () => ({
+  buildInvoicePdf: jest.fn().mockResolvedValue({
+    storageUrl: "https://r2.example.com/invoices/test/1234.pdf",
+    agreedRateUsd: 500,
+    noOfActivities: null,
+    totalUsd: 500,
+    rateUnit: "flat_fee",
+  }),
+}));
+
 jest.mock("@/lib/prisma", () => ({
   prisma: {
     $transaction: jest.fn(),
@@ -61,6 +71,7 @@ function makeTx(overrides?: { updateCount?: number; updateResult?: Record<string
       findUnique: jest.fn().mockResolvedValue(null),
     },
     engagementStatusHistory: { create: jest.fn().mockResolvedValue({}) },
+    invoice: { create: jest.fn().mockResolvedValue({}) },
   } as unknown as PrismaClient;
 }
 
@@ -324,14 +335,25 @@ describe("legalReturnAction", () => {
 describe("sendToFinanceAction", () => {
   it("transitions submitted → finance_review for compliance user", async () => {
     mockCurrentUser.mockResolvedValue(makeUser("compliance") as never);
+    (mockPrisma.engagement.findUnique as jest.Mock).mockResolvedValue({
+      id: "eng-123", status: "submitted", popDocumentUrl: null, invoice: null,
+      hcp: { fullName: "Dr. Test", npi: "1234567890", nuccCode: null, nuccDisplayName: null },
+    });
     (mockPrisma.$transaction as jest.Mock).mockImplementation(async (cb: (tx: PrismaClient) => Promise<unknown>) => cb(makeTx()));
 
     const result = await sendToFinanceAction("eng-123");
     expect(result.success).toBe(true);
   });
 
-  it("transitions pop_submitted → finance_review", async () => {
+  it("transitions pop_submitted → completed + invoice auto-generated", async () => {
     mockCurrentUser.mockResolvedValue(makeUser("compliance") as never);
+    (mockPrisma.engagement.findUnique as jest.Mock).mockResolvedValue({
+      id: "eng-123", status: "pop_submitted",
+      popDocumentUrl: "/api/engagements/pop-file/abc123.pdf",
+      invoice: null,
+      hcp: { fullName: "Dr. Test", npi: "1234567890", nuccCode: null, nuccDisplayName: null },
+      engagementType: "advisory_board", proposedDate: new Date(), agreedRateUsd: 500, noOfActivities: null,
+    });
     (mockPrisma.$transaction as jest.Mock).mockImplementation(async (cb: (tx: PrismaClient) => Promise<unknown>) => cb(makeTx()));
 
     const result = await sendToFinanceAction("eng-123");
@@ -347,6 +369,10 @@ describe("sendToFinanceAction", () => {
 
   it("returns error when updateMany count=0 (wrong state)", async () => {
     mockCurrentUser.mockResolvedValue(makeUser("compliance") as never);
+    (mockPrisma.engagement.findUnique as jest.Mock).mockResolvedValue({
+      id: "eng-wrong-state", status: "submitted", popDocumentUrl: null, invoice: null,
+      hcp: { fullName: "Dr. Test", npi: "1234567890", nuccCode: null, nuccDisplayName: null },
+    });
     (mockPrisma.$transaction as jest.Mock).mockImplementation(async (cb: (tx: PrismaClient) => Promise<unknown>) => cb(makeTx({ updateCount: 0 })));
 
     const result = await sendToFinanceAction("eng-wrong-state");

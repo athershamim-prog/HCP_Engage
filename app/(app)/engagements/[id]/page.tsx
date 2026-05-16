@@ -51,6 +51,7 @@ export default async function EngagementDetailPage({
     !effectiveRoles.includes("compliance") &&
     !effectiveRoles.includes("finance");
   const isCompliance = effectiveRoles.includes("compliance");
+  const isFinance = effectiveRoles.includes("finance");
 
   const engagement = await prisma.engagement.findUnique({
     where: { id },
@@ -262,8 +263,8 @@ export default async function EngagementDetailPage({
           </Card>
         )}
 
-        {/* Invoice download card — shown once invoice is generated */}
-        {engagement.invoice && (
+        {/* Invoice download card — finance only */}
+        {isFinance && engagement.invoice && (
           <Card>
             <CardHeader>
               <CardTitle className="text-[20px]">Invoice</CardTitle>

@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
 export interface InvoiceDocumentProps {
   hcpFullName: string;
   hcpNpi: string;
-  hcpSpecialty: string;
+  hcpSpecialty: string | null;
   engagementType: string;
   proposedDate: string;
   agreedRateUsd: number;
@@ -48,7 +48,7 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
           </View>
         </View>
         <Text style={styles.label}>Specialty</Text>
-        <Text style={styles.value}>{props.hcpSpecialty}</Text>
+        <Text style={styles.value}>{props.hcpSpecialty ?? "—"}</Text>
 
         <View style={styles.divider} />
 
