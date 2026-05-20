@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { getEffectiveRoles, assertRole } from "@/lib/auth";
-import { buildInvoicePdf } from "@/lib/generate-invoice";
+import { calculateInvoiceData } from "@/lib/generate-invoice";
 
 export async function POST(
   _request: NextRequest,
@@ -72,7 +72,7 @@ export async function POST(
       );
     }
 
-    const payload = await buildInvoicePdf(engagement);
+    const payload = await calculateInvoiceData(engagement);
 
     await prisma.$transaction(async (tx) => {
       await tx.invoice.create({
