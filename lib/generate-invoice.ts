@@ -1,14 +1,8 @@
-import { renderToBuffer } from "@react-pdf/renderer";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { prisma } from "@/lib/prisma";
-import { r2 } from "@/lib/r2";
 import { calculateInvoiceTotal } from "@/lib/invoice-calc";
-import { InvoiceDocument } from "@/components/pdf/InvoiceDocument";
-import React from "react";
 import type { Prisma, EngagementType } from "@prisma/client";
 
-export interface InvoicePayload {
-  storageUrl: string;
+export interface InvoiceCalcResult {
   agreedRateUsd: number;
   noOfActivities: number | null;
   totalUsd: number;
@@ -18,20 +12,18 @@ export interface InvoicePayload {
 type EngagementForInvoice = {
   id: string;
   engagementType: EngagementType;
-  proposedDate: Date;
   agreedRateUsd: Prisma.Decimal;
   noOfActivities: number | null;
   hcp: {
-    fullName: string;
-    npi: string;
     nuccCode: string | null;
-    nuccDisplayName: string | null;
   };
 };
 
-export async function buildInvoicePdf(
+// Looks up FMV rate and calculates invoice totals. No I/O other than DB.
+// PDF rendering happens on-demand in the /invoice/pdf route handler.
+export async function calculateInvoiceData(
   engagement: EngagementForInvoice
-): Promise<InvoicePayload> {
+): Promise<InvoiceCalcResult> {
   const fmvRate = await prisma.fmvRate.findFirst({
     where: {
       rateCard: { status: "active" },
@@ -49,32 +41,7 @@ export async function buildInvoicePdf(
     noOfActivities: engagement.noOfActivities ?? null,
   });
 
-  const invoiceElement = React.createElement(InvoiceDocument, {
-    hcpFullName: engagement.hcp.fullName,
-    hcpNpi: engagement.hcp.npi,
-    hcpSpecialty: engagement.hcp.nuccDisplayName,
-    engagementType: engagement.engagementType,
-    proposedDate: engagement.proposedDate.toISOString().split("T")[0],
-    agreedRateUsd: agreedRateNum,
-    rateUnit,
-    noOfActivities: engagement.noOfActivities ?? null,
-    totalUsd,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  }) as any;
-  const buffer = await renderToBuffer(invoiceElement);
-
-  const key = `invoices/${engagement.id}/${Date.now()}.pdf`;
-  await r2.send(
-    new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET_NAME!,
-      Key: key,
-      Body: buffer,
-      ContentType: "application/pdf",
-    })
-  );
-
   return {
-    storageUrl: `${process.env.R2_PUBLIC_URL}/${key}`,
     agreedRateUsd: agreedRateNum,
     noOfActivities:
       noOfActivitiesApplied === 1 && !engagement.noOfActivities

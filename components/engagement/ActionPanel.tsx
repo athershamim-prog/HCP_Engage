@@ -459,8 +459,8 @@ export function ActionPanel({
 
   // ── Completed ──────────────────────────────────────────────────────────────
   if (status === "completed") {
-    // Finance only: show Download Invoice when invoice exists
-    if (isFinance && invoiceStorageUrl) {
+    // Compliance + Finance: show Download Invoice when invoice exists
+    if ((isCompliance || isFinance) && invoiceStorageUrl) {
       return (
         <Card>
           <CardHeader>

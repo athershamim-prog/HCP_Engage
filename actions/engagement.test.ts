@@ -6,8 +6,7 @@
 import type { PrismaClient } from "@prisma/client";
 
 jest.mock("@/lib/generate-invoice", () => ({
-  buildInvoicePdf: jest.fn().mockResolvedValue({
-    storageUrl: "https://r2.example.com/invoices/test/1234.pdf",
+  calculateInvoiceData: jest.fn().mockResolvedValue({
     agreedRateUsd: 500,
     noOfActivities: null,
     totalUsd: 500,

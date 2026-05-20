@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getEffectiveRoles, assertRole } from "@/lib/auth";
 import { validateEngagementFields, validateRejectionReason, validateStateTransition } from "@/lib/engagement-validation";
-import { buildInvoicePdf } from "@/lib/generate-invoice";
+import { calculateInvoiceData } from "@/lib/generate-invoice";
 import type { EngagementType, EngagementStatus } from "@prisma/client";
 
 export interface CreateEngagementParams {
@@ -365,8 +365,8 @@ export async function sendToFinanceAction(
         return { success: false, error: "Invoice already exists for this engagement" };
       }
 
-      // Build PDF and upload to R2 before transaction (async I/O cannot run inside Prisma tx)
-      const payload = await buildInvoicePdf(engagement);
+      // Calculate invoice data; PDF rendered on-demand via /api/engagements/[id]/invoice/pdf
+      const payload = await calculateInvoiceData(engagement);
 
       await prisma.$transaction(async (tx) => {
         // Atomic status check — guards against concurrent state changes between load and tx
@@ -386,7 +386,7 @@ export async function sendToFinanceAction(
         await tx.invoice.create({
           data: {
             engagementId,
-            storageUrl: payload.storageUrl,
+            storageUrl: `/api/engagements/${engagementId}/invoice/pdf`,
             agreedRateUsd: payload.agreedRateUsd,
             noOfActivities: payload.noOfActivities,
             totalUsd: payload.totalUsd,

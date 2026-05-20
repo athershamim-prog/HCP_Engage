@@ -263,8 +263,8 @@ export default async function EngagementDetailPage({
           </Card>
         )}
 
-        {/* Invoice download card — finance only */}
-        {isFinance && engagement.invoice && (
+        {/* Invoice download card — compliance + finance */}
+        {(isCompliance || isFinance) && engagement.invoice && (
           <Card>
             <CardHeader>
               <CardTitle className="text-[20px]">Invoice</CardTitle>
