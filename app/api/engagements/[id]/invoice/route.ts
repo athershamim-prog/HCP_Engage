@@ -73,12 +73,13 @@ export async function POST(
     }
 
     const payload = await calculateInvoiceData(engagement);
+    const storageUrl = `/api/engagements/${engagementId}/invoice/pdf`;
 
     await prisma.$transaction(async (tx) => {
       await tx.invoice.create({
         data: {
           engagementId,
-          storageUrl: payload.storageUrl,
+          storageUrl,
           agreedRateUsd: payload.agreedRateUsd,
           noOfActivities: payload.noOfActivities,
           totalUsd: payload.totalUsd,
@@ -89,7 +90,7 @@ export async function POST(
       });
     });
 
-    return NextResponse.json({ storageUrl: payload.storageUrl });
+    return NextResponse.json({ storageUrl });
   } catch (error) {
     if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json(
