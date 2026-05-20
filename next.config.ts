@@ -6,8 +6,6 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '5mb',
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    nodeMiddleware: true as any,
   },
   images: {
     remotePatterns: [
