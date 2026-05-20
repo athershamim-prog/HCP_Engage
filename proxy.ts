@@ -1,8 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-// Node.js runtime required for Clerk v7 — declared alongside experimental.nodeMiddleware in next.config.ts
-export const runtime = "nodejs";
 
 const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/api/webhooks(.*)"]);
 
