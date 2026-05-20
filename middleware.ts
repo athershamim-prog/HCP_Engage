@@ -1,44 +1,54 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { canAccessRoute } from "@/lib/auth";
+
+// Node.js runtime required for Clerk v7 — declared alongside experimental.nodeMiddleware in next.config.ts
+export const runtime = "nodejs";
 
 const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/api/webhooks(.*)"]);
+
+// Inlined from @/lib/auth to keep this file self-contained for the Node.js runtime bundler
+const ROUTE_PERMISSIONS: Record<string, string[]> = {
+  "/hcps": ["business", "compliance"],
+  "/hcps/new": ["business", "compliance"],
+  "/dashboard": ["finance"],
+  "/fmv": ["compliance"],
+  "/fmv/upload": ["compliance"],
+  "/engagements": ["business", "compliance", "finance", "legal"],
+  "/engagements/new": ["business", "compliance"],
+  "/engagements/queue": ["compliance", "finance"],
+  "/engagements/legal-queue": ["legal", "compliance"],
+};
+
+function canAccessRoute(role: string, pathname: string): boolean {
+  for (const [pattern, roles] of Object.entries(ROUTE_PERMISSIONS)) {
+    if (pathname === pattern || pathname.startsWith(pattern + "/")) {
+      return roles.includes(role);
+    }
+  }
+  return true;
+}
 
 export default clerkMiddleware(async (auth, request) => {
   const { userId, sessionClaims } = await auth();
   const pathname = request.nextUrl.pathname;
 
-  // Allow public routes through
   if (isPublicRoute(request)) return NextResponse.next();
 
-  // Redirect unauthenticated users to sign-in
   if (!userId) {
     const signInUrl = new URL("/sign-in", request.url);
     signInUrl.searchParams.set("redirect_url", pathname);
     return NextResponse.redirect(signInUrl);
   }
 
-  // Get primary role from Clerk publicMetadata
   const role = (sessionClaims?.publicMetadata as { role?: string } | undefined)?.role;
 
-  // Note: UserGrant expansion (D-04b) is read in Server Components (DB access),
-  // not here in middleware (no DB access at edge). Middleware enforces primary role only.
-  // Server Components perform full effective-role check using getEffectiveRoles().
-  const primaryRoles = role ? [role as import("@/lib/auth").AppRole] : [];
-
-  // API routes authenticate themselves internally — skip role check here
   if (pathname.startsWith("/api/")) return NextResponse.next();
 
-  // Users with no role assigned would loop forever — send them back to sign-in
   if (!role) {
-    const signInUrl = new URL("/sign-in", request.url);
-    return NextResponse.redirect(signInUrl);
+    return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  // Check route access using primary role only (conservative — expansion checked in components)
-  // Finance users trying /hcps → redirect to /dashboard
-  // Business users trying /dashboard → redirect to /hcps
-  if (!canAccessRoute({ effectiveRoles: primaryRoles, route: pathname })) {
+  if (!canAccessRoute(role, pathname)) {
     let fallback = "/hcps";
     if (role === "finance") fallback = "/dashboard";
     else if (role === "legal") fallback = "/engagements/legal-queue";
