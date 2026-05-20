@@ -167,12 +167,10 @@ export default async function EngagementDetailPage({
                 <dt className="text-[12px] font-semibold text-[hsl(215_16%_47%)]">Agreed Rate (USD)</dt>
                 <dd className="mt-0.5">${agreedRateDisplay}</dd>
               </div>
-              {engagement.noOfActivities != null && (
-                <div>
-                  <dt className="text-[12px] font-semibold text-[hsl(215_16%_47%)]">No of Activities</dt>
-                  <dd className="mt-0.5">{engagement.noOfActivities}</dd>
-                </div>
-              )}
+              <div>
+                <dt className="text-[12px] font-semibold text-[hsl(215_16%_47%)]">No of Activities</dt>
+                <dd className="mt-0.5">{engagement.noOfActivities ?? "—"}</dd>
+              </div>
               <div className="col-span-2">
                 <dt className="text-[12px] font-semibold text-[hsl(215_16%_47%)]">
                   Description / Scope of Work

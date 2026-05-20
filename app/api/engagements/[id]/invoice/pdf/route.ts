@@ -43,6 +43,8 @@ export async function GET(
   }
 
   const inv = engagement.invoice;
+  const invoiceNumber = `INV-${inv.id.slice(-8).toUpperCase()}`;
+  const invoiceDate = inv.generatedAt.toISOString().split("T")[0];
   const invoiceElement = React.createElement(InvoiceDocument, {
     hcpFullName: engagement.hcp.fullName,
     hcpNpi: engagement.hcp.npi,
@@ -53,6 +55,8 @@ export async function GET(
     rateUnit: inv.rateUnit,
     noOfActivities: inv.noOfActivities,
     totalUsd: parseFloat(inv.totalUsd.toString()),
+    invoiceNumber,
+    invoiceDate,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }) as any;
 

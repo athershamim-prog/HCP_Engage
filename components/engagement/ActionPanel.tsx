@@ -195,14 +195,6 @@ export function ActionPanel({
           >
             {isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending...</> : "Send to Legal"}
           </Button>
-          <Button
-            onClick={() => wrap(() => sendToFinanceAction(engagementId), "Sent directly to Finance.")}
-            disabled={isPending}
-            variant="outline"
-            className="w-full h-11"
-          >
-            {isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending...</> : "Send to Finance"}
-          </Button>
           <Divider />
           <RejectForm
             value={rejectionText}
